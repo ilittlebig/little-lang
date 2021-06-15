@@ -41,10 +41,71 @@ token_type_t convert_to_token_type(char* word) {
 		token_type = INT;
 	} else if (strcmp(word, "char") == 0) {
 		token_type = CHAR;
+	} else if (strcmp(word, "void") == 0) {
+		token_type = VOID;
 	} else {
 		token_type = UNIDENTIFIED;
 	}
 	return token_type;
+}
+
+char* convert_type_to_string(token_type_t token_type) {
+	if (token_type == FN) {
+		return "FN";
+	} else if (token_type == INT) {
+		return "INT";
+	} else if (token_type == CHAR) {
+		return "CHAR";
+	} else if (token_type == VOID) {
+		return "VOID";
+	} else if (token_type == WHITESPACE) {
+		return "WHITESPACE";
+	}
+	return "UNIDENTIFIED";
+}
+
+token_t* read_string(tokenizer_t* tokenizer) {
+	token_t* token = malloc(sizeof(token_t));
+	char* string = calloc(0, sizeof(char));
+
+	char* input = tokenizer->input;
+	const char start_char = input[tokenizer->pos++];
+
+	bool is_closed = false;
+	int size = 0;
+
+	while (true) {
+		const char c = input[tokenizer->pos];
+		if (c == '\\') {
+			size++;
+			string = realloc(string, size*sizeof(char));
+			string[size-1] = input[tokenizer->pos++];
+
+			size++;
+			string = realloc(string, size*sizeof(char));
+			string[size-1] = input[tokenizer->pos++];
+		}
+		if (c != start_char && has_at_least(tokenizer, 0)) {
+			size++;
+			string = realloc(string, size*sizeof(char));
+			string[size-1] = input[tokenizer->pos++];
+		} else if (c == start_char) {
+			is_closed = true;
+			tokenizer->pos++;
+			break;
+		} else {
+			break;
+		}
+	}
+
+	if (is_closed) {
+		token->type = STRING_LITERAL;
+	} else {
+		token->type = UNCLOSED_STRING_LITERAL;
+	}
+
+	free(string);
+	return token;
 }
 
 token_t* read_other_tokens(tokenizer_t* tokenizer) {
@@ -113,6 +174,11 @@ token_t* next_token(tokenizer_t* tokenizer) {
 	const char c = tokenizer->input[tokenizer->pos];
 
 	switch(c) {
+		case '\'':
+			return read_string(tokenizer);
+		case '\"':
+			return read_string(tokenizer);
+
 		case '+':
 			token->type = ADD;
 			break;
@@ -181,15 +247,15 @@ token_t* next_token(tokenizer_t* tokenizer) {
 }
 
 int main() {
-	char* input = "+-/%^(){}[] <= < >= > = == , ; : . fn int char void";
+	char* input = "fn int char void";
 
-	tokenizer_t *tokenizer = malloc(sizeof(struct tokenizer_t));
+	tokenizer_t* tokenizer = malloc(sizeof(struct tokenizer_t));
 	tokenizer->input = strdup(input);
 	tokenizer->pos = 0;
 
 	while (!is_eof(tokenizer)) {
 		token_t* token = next_token(tokenizer);
-		printf("%d\n", token->type);
+		printf("TYPE: %s\n", convert_type_to_string(token->type));
 	}
 	free(tokenizer->input);
 
