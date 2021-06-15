@@ -10,10 +10,10 @@ typedef enum token_type_t {
 	// Reserved Keywords
 	FN,
 	INT,
+	FLOAT,
 	CHAR,
 	VOID,
 
-	NUMBER,
 	IDENTIFIER,
 
 	GREATER_OR_EQUAL,
@@ -38,6 +38,7 @@ typedef enum token_type_t {
 	ASSIGN,
 	LESS,
 	GREATER,
+	NOT,
 
 	COLON, // :
 	COMMA, // ,
