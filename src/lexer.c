@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "vec.h"
 
 bool starts_with(const char* str1, const char* str2, const int pos) {
 	for (int i = 0; i < strlen(str2); i++) {
@@ -119,6 +120,9 @@ char* convert_type_to_string(token_type_t token_type) {
 	} else if (token_type == ATTR) {
 		return "ATTR";
 
+	} else if (token_type == STRING_LITERAL) {
+		return "STRING_LITERAL";
+
 	} else if (token_type == WHITESPACE) {
 		return "WHITESPACE";
 	}
@@ -160,7 +164,6 @@ token_t* read_digit(tokenizer_t* tokenizer) {
 		}
 	}
 
-	printf("digit: %s\n", digit);
 	if (is_int) {
 		token->type = INT;
 	} else {
@@ -354,7 +357,7 @@ token_t* next_token(tokenizer_t* tokenizer) {
 }
 
 int main() {
-	char* input = "0 0.1 5.5 10E+10 10e-4";
+	char* input = "fn int float char void hello_world >= == <= != ()[]{} +-*/%^ = < > ! : , ; . 'stringg literal'";
 
 	tokenizer_t* tokenizer = malloc(sizeof(struct tokenizer_t));
 	tokenizer->input = strdup(input);
@@ -365,6 +368,20 @@ int main() {
 		printf("TYPE: %s\n", convert_type_to_string(token->type));
 	}
 	free(tokenizer->input);
+
+	vec_t v;
+	vec_init(&v, 4);
+
+	vec_push_back(&v, "a");
+	vec_push_back(&v, "b");
+	vec_push_back(&v, "c");
+	vec_push_back(&v, "d");
+	vec_push_back(&v, "e");
+	vec_push_back(&v, "f");
+
+	for (int i = 0; i < vec_length(&v); i++) {
+		printf("%s\n", vec_get(&v, i));
+	}
 
 	return 0;
 }

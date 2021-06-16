@@ -1,4 +1,5 @@
 #ifndef LEXER_H
+#define LEXER_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +53,8 @@ typedef enum token_type_t {
 	UNCLOSED_STRING_LITERAL,
 
 	WHITESPACE,
-	UNIDENTIFIED
+	UNIDENTIFIED,
+	END_OF_FILE
 } token_type_t;
 
 typedef struct token_t {
