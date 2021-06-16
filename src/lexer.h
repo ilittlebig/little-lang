@@ -7,6 +7,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "vec.h"
+
 typedef enum token_type_t {
 	// Reserved Keywords
 	FN,
@@ -65,5 +67,7 @@ typedef struct tokenizer_t {
 	char* input;
 	size_t pos;
 } tokenizer_t;
+
+vec_t tokenize(const char*);
 
 #endif

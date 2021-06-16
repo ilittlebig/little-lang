@@ -1,5 +1,4 @@
 #include "lexer.h"
-#include "vec.h"
 
 bool starts_with(const char* str1, const char* str2, const int pos) {
 	for (int i = 0; i < strlen(str2); i++) {
@@ -50,83 +49,6 @@ token_type_t convert_to_token_type(char* word) {
 		token_type = UNIDENTIFIED;
 	}
 	return token_type;
-}
-
-char* convert_type_to_string(token_type_t token_type) {
-	if (token_type == FN) {
-		return "FN";
-	} else if (token_type == INT) {
-		return "INT";
-	} else if (token_type == FLOAT) {
-		return "FLOAT";
-	} else if (token_type == CHAR) {
-		return "CHAR";
-	} else if (token_type == VOID) {
-		return "VOID";
-
-	} else if (token_type == IDENTIFIER) {
-		return "IDENTIFIER";
-
-	} else if (token_type == GREATER_OR_EQUAL) {
-		return "GREATER_OR_EQUAL";
-	} else if (token_type == EQUAL) {
-		return "EQUAL";
-	} else if (token_type == LESS_OR_EQUAL) {
-		return "LESS_OR_EQUAL";
-	} else if (token_type == NOT_EQUAL) {
-		return "NOT_EQUAL";
-
-	} else if (token_type == LEFT_PAREN) {
-		return "LEFT_PAREN";
-	} else if (token_type == RIGHT_PAREN) {
-		return "RIGHT_PAREN";
-	} else if (token_type == LEFT_BRACKET) {
-		return "LEFT_BRACKET";
-	} else if (token_type == RIGHT_BRACKET) {
-		return "RIGHT_BRACKET";
-	} else if (token_type == LEFT_CURLY) {
-		return "LEFT_CURLY";
-	} else if (token_type == RIGHT_CURLY) {
-		return "RIGHT_CURLY";
-
-	} else if (token_type == ADD) {
-		return "ADD";
-	} else if (token_type == MINUS) {
-		return "MINUS";
-	} else if (token_type == MUL) {
-		return "MUL";
-	} else if (token_type == DIV) {
-		return "DIV";
-	} else if (token_type == MOD) {
-		return "MOD";
-	} else if (token_type == POW) {
-		return "POW";
-
-	} else if (token_type == ASSIGN) {
-		return "ASSIGN";
-	} else if (token_type == LESS) {
-		return "LESS";
-	} else if (token_type == GREATER) {
-		return "GREATER";
-	} else if (token_type == NOT) {
-		return "NOT";
-
-	} else if (token_type == COLON) {
-		return "COLON";
-	} else if (token_type == COMMA) {
-		return "COMMA";
-	} else if (token_type == SEMICOLON) {
-		return "SEMICOLON";
-	} else if (token_type == ATTR) {
-		return "ATTR";
-
-	} else if (token_type == STRING_LITERAL) {
-		return "STRING_LITERAL";
-
-	} else if (token_type == WHITESPACE) {
-		return "WHITESPACE";
-	}
-	return "UNIDENTIFIED";
 }
 
 token_t* read_digit(tokenizer_t* tokenizer) {
@@ -356,32 +278,19 @@ token_t* next_token(tokenizer_t* tokenizer) {
 	}
 }
 
-int main() {
-	char* input = "fn int float char void hello_world >= == <= != ()[]{} +-*/%^ = < > ! : , ; . 'stringg literal'";
-
+vec_t tokenize(const char* input) {
 	tokenizer_t* tokenizer = malloc(sizeof(struct tokenizer_t));
 	tokenizer->input = strdup(input);
 	tokenizer->pos = 0;
 
+	vec_t tokens;
+	vec_init(&tokens, 4);
+
 	while (!is_eof(tokenizer)) {
 		token_t* token = next_token(tokenizer);
-		printf("TYPE: %s\n", convert_type_to_string(token->type));
+		vec_push_back(&tokens, token);
 	}
+
 	free(tokenizer->input);
-
-	vec_t v;
-	vec_init(&v, 4);
-
-	vec_push_back(&v, "a");
-	vec_push_back(&v, "b");
-	vec_push_back(&v, "c");
-	vec_push_back(&v, "d");
-	vec_push_back(&v, "e");
-	vec_push_back(&v, "f");
-
-	for (int i = 0; i < vec_length(&v); i++) {
-		printf("%s\n", vec_get(&v, i));
-	}
-
-	return 0;
+	return tokens;
 }

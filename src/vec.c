@@ -30,7 +30,7 @@ static void vec_resize(vec_t* vec, int capacity) {
 }
 
 void vec_push_back(vec_t* vec, void* item) {
-	if (vec->size >= vec->capacity) {
+	if (vec->capacity >= vec->size) {
 		vec_resize(vec, vec->capacity * 2);
 	}
 	vec->data[vec->size++] = item;
