@@ -291,6 +291,10 @@ vec_t tokenize(const char* input) {
 		vec_push_back(&tokens, token);
 	}
 
-	free(tokenizer->input);
+	token_t* token = malloc(sizeof(token_t));
+	token->type = END_OF_FILE;
+	vec_push_back(&tokens, token);
+
+	free(tokenizer);
 	return tokens;
 }
