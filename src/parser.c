@@ -23,6 +23,18 @@ int main() {
 	while (parser->head->type != END_OF_FILE) {
 		token_t* token = peek_token(parser);
 		advance_token(parser);
+
+		if (token->type == INT) {
+			printf("int keyword\n");
+		} else if (token->type == IDENTIFIER) {
+			printf("identifier, value: %s\n", token->value);
+		} else if (token->type == STRING_LITERAL) {
+			printf("string, value: %s\n", token->value);
+		} else if (token->type == ASSIGN) {
+			printf("assign\n");
+		} else if (token->type == INT_NUMBER) {
+			printf("int number, value: %i\n", token->value);
+		}
 	}
 
 	free(parser);
