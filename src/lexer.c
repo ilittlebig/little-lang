@@ -53,45 +53,31 @@ token_type_t convert_to_token_type(char* word) {
 
 token_t* read_digit(tokenizer_t* tokenizer) {
 	token_t* token = malloc(sizeof(token_t));
-	char* digit = calloc(0, sizeof(char));
 	char* input = tokenizer->input;
 
-	bool is_int = true;
+	char* digit = calloc(0, sizeof(char));
 	int size = 0;
 
 	while (true) {
 		const char c = input[tokenizer->pos];
 		if (c == '.') {
-			is_int = false;
 			size++;
-			digit = realloc(digit, size*sizeof(char));
+			digit = realloc(digit, size);
 			digit[size-1] = input[tokenizer->pos++];
 		} else if (isdigit(c)) {
 			size++;
-			digit = realloc(digit, size*sizeof(char));
+			digit = realloc(digit, size);
 			digit[size-1] = input[tokenizer->pos++];
-		} else if (c == 'e' || c == 'E') { // TODO: Add support for decimal points
-			size++;
-			digit = realloc(digit, size*sizeof(char));
-			digit[size-1] = input[tokenizer->pos++];
-
-			const char c = input[tokenizer->pos];
-			if (c == '-' || c == '+') {
-				size++;
-				digit = realloc(digit, size*sizeof(char));
-				digit[size-1] = input[tokenizer->pos++];
-			}
 		} else {
 			break;
 		}
 	}
 
-	if (is_int) {
-		token->type = INT;
-	} else {
-		token->type = FLOAT;
-	}
+	int* number;
+	sscanf(digit, "%i", &number);
 
+	token->type = INT_NUMBER;
+	token->value = number;
 	return token;
 }
 
@@ -100,6 +86,9 @@ token_t* read_string(tokenizer_t* tokenizer) {
 
 	char* input = tokenizer->input;
 	const char start_char = input[tokenizer->pos++];
+
+	char* string = calloc(0, sizeof(char));
+	int size = 0;
 
 	bool is_closed = false;
 
@@ -110,10 +99,11 @@ token_t* read_string(tokenizer_t* tokenizer) {
 		}
 
 		if (c != start_char && has_at_least(tokenizer, 0)) {
-			tokenizer->pos++;
+			size++;
+			string = realloc(string, size*1);
+			string[size-1] = input[tokenizer->pos++];
 		} else if (c == start_char) {
 			is_closed = true;
-			tokenizer->pos++;
 			break;
 		} else {
 			break;
@@ -125,6 +115,7 @@ token_t* read_string(tokenizer_t* tokenizer) {
 	} else {
 		token->type = UNCLOSED_STRING_LITERAL;
 	}
+	token->value = string;
 
 	return token;
 }
@@ -182,7 +173,7 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 
 		while (is_valid_ident(tokenizer)) {
 			size++;
-			word = realloc(word, size*sizeof(char));
+			word = realloc(word, size*1);
 			word[size-1] = input[tokenizer->pos++];
 		}
 
@@ -191,9 +182,8 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 			token->type = token_type;
 		} else { // IDENTIFIER
 			token->type = IDENTIFIER;
+			token->value = word;
 		}
-
-		free(word);
 	}
 
 	return token;

@@ -9,6 +9,7 @@ typedef struct parser_t {
 	int tokens_parsed;
 } parser_t;
 
-token_t* peek_token(parser_t* parser);
+token_t* peek_token(parser_t*);
+void advance_token(parser_t*);
 
 #endif

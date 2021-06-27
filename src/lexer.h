@@ -17,6 +17,8 @@ typedef enum token_type_t {
 	CHAR,
 	VOID,
 
+	INT_NUMBER,
+	FLOAT_NUMBER,
 	IDENTIFIER,
 
 	GREATER_OR_EQUAL,
@@ -61,6 +63,7 @@ typedef enum token_type_t {
 
 typedef struct token_t {
 	token_type_t type;
+	void* value;
 } token_t;
 
 typedef struct tokenizer_t {
