@@ -278,7 +278,9 @@ vec_t tokenize(const char* input) {
 
 	while (!is_eof(tokenizer)) {
 		token_t* token = next_token(tokenizer);
-		vec_push_back(&tokens, token);
+		if (token->type != WHITESPACE) {
+			vec_push_back(&tokens, token);
+		}
 	}
 
 	token_t* token = malloc(sizeof(token_t));
