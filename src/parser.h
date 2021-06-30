@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "lexer.h"
+#include "ast.h"
 
 typedef struct parser_t {
 	vec_t tokens;
@@ -10,6 +10,12 @@ typedef struct parser_t {
 } parser_t;
 
 token_t* peek_token(parser_t*);
-void advance_token(parser_t*);
+void advance_token(parser_t* parser);
+void advance_token_type(parser_t* parser, token_type_t token_type);
+
+ast_t* parse_fn(parser_t*);
+ast_t* parse_id(parser_t*);
+ast_t* parse_arguments(parser_t*);
+ast_t* parse_expr(parser_t*);
 
 #endif

@@ -33,7 +33,7 @@ bool is_valid_ident(const tokenizer_t* tokenizer) {
 	return false;
 }
 
-token_type_t convert_to_token_type(char* word) {
+token_type_t str_to_token(char* word) {
 	token_type_t token_type;
 	if (strcmp(word, "fn") == 0) {
 		token_type = FN;
@@ -49,6 +49,47 @@ token_type_t convert_to_token_type(char* word) {
 		token_type = UNIDENTIFIED;
 	}
 	return token_type;
+}
+
+char* token_to_str(token_type_t token_type) {
+	switch (token_type) {
+		case FN: return "FN";
+		case INT: return "INT";
+		case FLOAT: return "FLOAT";
+		case CHAR: return "CHAR";
+		case VOID: return "VOID";
+		case INT_NUMBER: return "INT_NUMBER";
+		case IDENTIFIER: return "IDENTIFIER";
+		case GREATER_OR_EQUAL: return "GREATER_OR_EQUAL";
+		case EQUAL: return "EQUAL";
+		case LESS_OR_EQUAL: return "LESS_OR_EQUAL";
+		case NOT_EQUAL: return "NOT_EQUAL";
+		case LEFT_PAREN: return "LEFT_PAREN";
+		case RIGHT_PAREN: return "RIGHT_PAREN";
+		case LEFT_BRACKET: return "LEFT_BRACKET";
+		case RIGHT_BRACKET: return "RIGHT_BRACKET";
+		case LEFT_CURLY: return "LEFT_CURLY";
+		case RIGHT_CURLY: return "RIGHT_CURLY";
+		case ADD: return "ADD";
+		case MINUS: return "MINUS";
+		case MUL: return "MUL";
+		case DIV: return "DIV";
+		case MOD: return "MOD";
+		case POW: return "POW";
+		case ASSIGN: return "ASSIGN";
+		case LESS: return "LESS";
+		case GREATER: return "GREATER";
+		case NOT: return "NOT";
+		case COLON: return "COLON";
+		case COMMA: return "COMMA";
+		case SEMICOLON: return "SEMICOLON";
+		case ATTR: return "ATTR";
+		case STRING_LITERAL: return "STRING_LITERAL";
+		case UNCLOSED_STRING_LITERAL: return "UNCLOSED_STRING_LITERAL";
+		case WHITESPACE: return "WHITESPACE";
+		case END_OF_FILE: return "END_OF_FILE";
+		default: { return "UNIDENTIFIED"; }
+	}
 }
 
 token_t* read_digit(tokenizer_t* tokenizer) {
@@ -177,7 +218,7 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 			word[size-1] = input[tokenizer->pos++];
 		}
 
-		token_type_t token_type = convert_to_token_type(word);
+		token_type_t token_type = str_to_token(word);
 		if (token_type != UNIDENTIFIED) { // KEYWORD
 			token->type = token_type;
 		} else { // IDENTIFIER

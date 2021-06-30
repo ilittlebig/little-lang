@@ -18,7 +18,6 @@ typedef enum token_type_t {
 	VOID,
 
 	INT_NUMBER,
-	FLOAT_NUMBER,
 	IDENTIFIER,
 
 	GREATER_OR_EQUAL,
@@ -50,8 +49,8 @@ typedef enum token_type_t {
 	SEMICOLON, // ;
 	ATTR, // .
 
-	SINGLELINE_COMMENT,
-	MULTILINE_COMMENT,
+	SINGLELINE_COMMENT, // UNIMPLEMENTED
+	MULTILINE_COMMENT, // UNIMPLEMENTED
 
 	STRING_LITERAL,
 	UNCLOSED_STRING_LITERAL,
@@ -71,6 +70,7 @@ typedef struct tokenizer_t {
 	size_t pos;
 } tokenizer_t;
 
+char* token_to_str(token_type_t);
 vec_t tokenize(const char*);
 
 #endif
