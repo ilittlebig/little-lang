@@ -23,17 +23,6 @@ void advance_token_type(parser_t* parser, token_type_t token_type) {
 	}
 }
 
-ast_t* parse_fn(parser_t* parser) {
-	advance_token_type(parser, FN);
-	token_t* token = peek_token(parser);
-
-	if (token->type == IDENTIFIER) {
-		ast_t* ast = init_ast(AST_FUNCTION);
-		ast->name = token->value;
-		return ast;
-	}
-}
-
 ast_t* parse_id(parser_t* parser) {
 	token_t* token = peek_token(parser);
 	char* value = token->value;
@@ -54,7 +43,7 @@ ast_t* parse_id(parser_t* parser) {
 	if (token->type == COLON) {
 		advance_token_type(parser, COLON);
 		token = peek_token(parser);
-		ast->type = token->type;
+		ast->data_type = token->type;
 
 		advance_token(parser);
 	}
@@ -62,28 +51,66 @@ ast_t* parse_id(parser_t* parser) {
 	return ast;
 }
 
-ast_t* parse_arguments(parser_t* parser) {
-	ast_t* compound = init_ast(AST_COMPOUND);
+ast_t* parse_list(parser_t* parser) {
+	ast_t* ast = init_ast(AST_COMPOUND);
 
 	advance_token_type(parser, LEFT_PAREN);
-	vec_push_back(&compound->list, parse_expr(parser));
+	vec_push_back(&ast->list, parse_expr(parser));
 
 	while (peek_token(parser)->type == COMMA) {
 		advance_token_type(parser, COMMA);
-		vec_push_back(&compound->list, parse_expr(parser));
+		vec_push_back(&ast->list, parse_expr(parser));
 	}
 
 	advance_token_type(parser, RIGHT_PAREN);
 
-	return compound;
+	if (peek_token(parser)->type == COLON) {
+		advance_token_type(parser, COLON);
+		ast->type = AST_FUNCTION;
+		ast->data_type = peek_token(parser)->type;
+
+		advance_token(parser);
+		ast->value = parse_block(parser);
+	}
+
+	return ast;
+}
+
+ast_t* parse_block(parser_t* parser) {
+	ast_t* ast = init_ast(AST_COMPOUND);
+	advance_token_type(parser, LEFT_CURLY);
+
+	while (peek_token(parser)->type != END_OF_FILE && peek_token(parser)->type != RIGHT_CURLY) {
+		vec_push_back(&ast->list, parse_expr(parser));
+
+		if (peek_token(parser)->type == SEMICOLON) {
+			advance_token_type(parser, SEMICOLON);
+		}
+	}
+
+	advance_token_type(parser, RIGHT_CURLY);
+}
+
+ast_t* parse_return(parser_t* parser) {
+	ast_t* ast = init_ast(AST_COMPOUND);
+	advance_token_type(parser, RETURN);
+	advance_token_type(parser, LEFT_PAREN);
+
+	while (peek_token(parser)->type != END_OF_FILE && peek_token(parser)->type != RIGHT_PAREN) {
+		vec_push_back(&ast->list, parse_expr(parser));
+	}
+
+	advance_token_type(parser, RIGHT_PAREN);
 }
 
 ast_t* parse_expr(parser_t* parser) {
 	token_t* token = peek_token(parser);
 	switch (token->type) {
-		case FN: return parse_fn(parser);
+		case FN: { advance_token_type(parser, FN); };
 		case IDENTIFIER: return parse_id(parser);
-		case LEFT_PAREN: return parse_arguments(parser);
+		case RETURN: return parse_return(parser);
+		case LEFT_PAREN: return parse_list(parser);
+		case END_OF_FILE: { break; }
 		default: {
 			printf("[Parser]: Unexpected token '%s'\n", token_to_str(token->type));
 			exit(1);
@@ -94,7 +121,7 @@ ast_t* parse_expr(parser_t* parser) {
 int main() {
 	parser_t* parser = malloc(sizeof(struct parser_t));
 
-	parser->tokens = tokenize("fn main(argc: char, argv: char, hello: char) : int { }");
+	parser->tokens = tokenize("fn main(argc: int, argv: char, hello: char) : int { return (func a b); }");
 	parser->head = vec_get(&parser->tokens, 0);
 	parser->tokens_parsed = 0;
 

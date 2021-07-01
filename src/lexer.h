@@ -16,6 +16,7 @@ typedef enum token_type_t {
 	FLOAT,
 	CHAR,
 	VOID,
+	RETURN,
 
 	INT_NUMBER,
 	IDENTIFIER,

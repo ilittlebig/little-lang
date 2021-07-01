@@ -16,6 +16,8 @@ void advance_token_type(parser_t* parser, token_type_t token_type);
 ast_t* parse_fn(parser_t*);
 ast_t* parse_id(parser_t*);
 ast_t* parse_arguments(parser_t*);
+ast_t* parse_block(parser_t*);
+ast_t* parse_return(parser_t*);
 ast_t* parse_expr(parser_t*);
 
 #endif

@@ -45,6 +45,8 @@ token_type_t str_to_token(char* word) {
 		token_type = CHAR;
 	} else if (strcmp(word, "void") == 0) {
 		token_type = VOID;
+	} else if (strcmp(word, "return") == 0) {
+		token_type = RETURN;
 	} else {
 		token_type = UNIDENTIFIED;
 	}
