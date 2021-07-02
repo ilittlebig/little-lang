@@ -1,13 +1,5 @@
-fn add(a: int, b: int) : int {
-	return (+ a b);
-}
-
-fn main(argc: int, argv: char) : int {
-	int num1 = (add 5 10); // 15
-	int num2 = (+ num1 5); // 20
-
-	(fprintf "%i, %i" num1 num2); // "15, 20"
-	(add 1 2); // 3
-
-	return 0; // success
+fn main() : void {
+	int num1 = 24;
+	int num2 = 21;
+	(printf num1 num2)
 }
