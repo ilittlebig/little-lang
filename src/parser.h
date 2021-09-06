@@ -24,6 +24,5 @@ ast_t* parse_compound(parser_t*);
 ast_t* parse_return(parser_t*);
 ast_t* parse_int(parser_t*);
 ast_t* parse_expr(parser_t*);
-char* read_file(const char*);
 
 #endif

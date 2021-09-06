@@ -2,7 +2,6 @@
 #define AST_H
 
 #include "lexer.h"
-#include <stdlib.h>
 
 typedef enum ast_type_t {
 	AST_VARIABLE,

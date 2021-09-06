@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "file.h"
 
 token_t* peek_token(parser_t* parser) {
 	if (vec_get(&parser->tokens, parser->tokens_parsed) != NULL) {
@@ -9,14 +10,14 @@ token_t* peek_token(parser_t* parser) {
 
 void advance_token(parser_t* parser) {
 	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
-	if (token != NULL) {
+	if (token) {
 		parser->tokens_parsed++;
 	}
 }
 
 void advance_token_type(parser_t* parser, token_type_t token_type) {
 	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
-	if (token != NULL && token->type == token_type) {
+	if (token && token->type == token_type) {
 		parser->tokens_parsed++;
 	} else {
 		printf("[Parser]: Unexpected token '%s' was expecting '%s'\n", token_to_str(token->type), token_to_str(token_type));
@@ -135,13 +136,7 @@ ast_t* parse_block(parser_t* parser) {
 
 ast_t* parse_compound(parser_t* parser) {
 	ast_t* ast = init_ast(AST_COMPOUND);
-	advance_token_type(parser, LEFT_PAREN);
-
-	while (peek_token(parser)->type != END_OF_FILE && peek_token(parser)->type != RIGHT_PAREN) {
-		vec_push_back(&ast->list, parse_expr(parser));
-	}
-
-	advance_token_type(parser, RIGHT_PAREN);
+	vec_push_back(&ast->list, parse_expr(parser));
 	return ast;
 }
 
@@ -150,8 +145,6 @@ ast_t* parse_return(parser_t* parser) {
 
 	ast_t* ast = init_ast(AST_RETURN);
 	ast->value = parse_compound(parser);
-
-	advance_token_type(parser, SEMICOLON);
 
 	return ast;
 }
@@ -177,39 +170,12 @@ ast_t* parse_expr(parser_t* parser) {
 		case IDENTIFIER: return parse_id(parser);
 		case LEFT_PAREN: return parse_list(parser);
 		case END_OF_FILE: { break; }
+
 		default: {
 			printf("[Parser]: Unexpected token '%s'\n", token_to_str(token->type));
 			exit(1);
 		}
 	}
-}
-
-char* read_file(const char* filename) {
-	FILE* file;
-	char* line = NULL;
-	size_t len = 0;
-	ssize_t read;
-
-	file = fopen(filename, "rb");
-	if (file == NULL) {
-		printf("Could not read file '%s'\n", filename);
-		exit(1);
-	}
-
-	char* buffer = (char*)calloc(1, sizeof(char));
-	buffer[0] = '\0';
-
-	while ((read = getline(&line, &len, file)) != -1) {
-		buffer = (char*)realloc(buffer, (strlen(buffer) + strlen(line) + 1) * sizeof(char));
-		strcat(buffer, line);
-	}
-
-	fclose(file);
-	if (line) {
-		free(line);
-	}
-
-	return buffer;
 }
 
 int main() {

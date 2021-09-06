@@ -56,6 +56,7 @@ token_type_t str_to_token(char* word) {
 char* token_to_str(token_type_t token_type) {
 	switch (token_type) {
 		case FN: return "FN";
+		case RETURN: return "RETURN";
 		case INT: return "INT";
 		case FLOAT: return "FLOAT";
 		case CHAR: return "CHAR";

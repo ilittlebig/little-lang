@@ -1,5 +1,3 @@
-fn main() : void {
-	int num1 = 24;
-	int num2 = 21;
-	(printf num1 num2)
+fn main() : int {
+	(return 0)
 }
