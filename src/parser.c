@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "file.h"
+#include "asm.h"
 
 token_t* peek_token(parser_t* parser) {
 	if (vec_get(&parser->tokens, parser->tokens_parsed) != NULL) {
@@ -48,8 +49,9 @@ ast_t* parse_keyword(parser_t* parser) {
 
 	advance_token(parser);
 
+	token_t* token = peek_token(parser);
 	ast_t* expr = parse_expr(parser);
-	ast->value = expr;
+	ast->value = expr->value;
 	ast->name = expr->name;
 
 	return ast;
@@ -61,18 +63,17 @@ ast_t* parse_id(parser_t* parser) {
 
 	advance_token_type(parser, IDENTIFIER);
 
-	if (peek_token(parser)->type == ASSIGN) {
-		advance_token_type(parser, ASSIGN);
+	switch(peek_token(parser)->type) {
+		case INT_NUMBER:
+			ast_t* ast = init_ast(AST_ASSIGNMENT);
+			ast->name = value;
 
-		ast_t* ast = init_ast(AST_ASSIGNMENT);
-		ast->name = value;
+			ast_t* expr_value = parse_expr(parser);
+			ast->data_type = expr_value->data_type;
+			ast->value = expr_value->value;
 
-		ast_t* expr_value = parse_expr(parser);
-		ast->data_type = expr_value->data_type;
-		ast->value = expr_value;
-
-		advance_token_type(parser, SEMICOLON);
-		return ast;
+			return ast;
+		default: break;
 	}
 
 	ast_t* ast = init_ast(AST_VARIABLE);
@@ -122,7 +123,7 @@ ast_t* parse_list(parser_t* parser) {
 }
 
 ast_t* parse_block(parser_t* parser) {
-	ast_t* ast = init_ast(AST_COMPOUND);
+	ast_t* ast = init_ast(AST_BLOCK);
 	advance_token_type(parser, LEFT_CURLY);
 
 	while (peek_token(parser)->type != END_OF_FILE && peek_token(parser)->type != RIGHT_CURLY) {
@@ -134,6 +135,7 @@ ast_t* parse_block(parser_t* parser) {
 	return ast;
 }
 
+// TODO: A compound is e.g (return 0) or (int a 50)
 ast_t* parse_compound(parser_t* parser) {
 	ast_t* ast = init_ast(AST_COMPOUND);
 	vec_push_back(&ast->list, parse_expr(parser));
@@ -144,7 +146,8 @@ ast_t* parse_return(parser_t* parser) {
 	advance_token_type(parser, RETURN);
 
 	ast_t* ast = init_ast(AST_RETURN);
-	ast->value = parse_compound(parser);
+	ast->data_type = RETURN;
+	ast->value = parse_expr(parser)->value;
 
 	return ast;
 }
@@ -191,6 +194,8 @@ int main() {
 	while (peek_token(parser)->type != END_OF_FILE) {
 		vec_push_back(&vec, parse_expr(parser));
 	}
+
+	asm_init(vec);
 
 	free(parser);
 	return 0;

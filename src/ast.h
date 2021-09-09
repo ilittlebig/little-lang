@@ -9,7 +9,8 @@ typedef enum ast_type_t {
 	AST_COMPOUND,
 	AST_RETURN,
 	AST_ASSIGNMENT,
-	AST_FUNCTION
+	AST_FUNCTION,
+	AST_BLOCK
 } ast_type_t;
 
 typedef struct ast_t {
@@ -20,6 +21,7 @@ typedef struct ast_t {
 	token_type_t data_type;
 } ast_t;
 
+char* ast_type_to_str(ast_type_t);
 ast_t* init_ast(ast_type_t);
 
 #endif
