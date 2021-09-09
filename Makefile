@@ -24,6 +24,11 @@ $(BIN_DIR)/%.c.o: %.c
 clean:
 	$(RM) -r $(BIN_DIR)
 
+run:
+	$(BIN_DIR)/parser
+	as -o $(BIN_DIR)/a.o $(BIN_DIR)/assembly.asm
+	ld -o $(BIN_DIR)/a $(BIN_DIR)/a.o
+
 -include $(DEPS)
 
 MKDIR_P ?= mkdir -p
