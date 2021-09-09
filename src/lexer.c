@@ -164,6 +164,30 @@ token_t* read_string(tokenizer_t* tokenizer) {
 	return token;
 }
 
+token_t* read_single_line_comment(tokenizer_t* tokenizer) {
+	token_t* token = malloc(sizeof(token_t));
+	token->type = SINGLE_LINE_COMMENT;
+
+	char* input = tokenizer->input;
+	const char start_char = input[tokenizer->pos];
+
+	char* string = calloc(0, sizeof(char));
+	int size = 0;
+
+	while (true) {
+		const char c = input[tokenizer->pos];
+		if (c != '\n' && has_at_least(tokenizer, 0)) {
+			size++;
+			string = realloc(string, size*1);
+			string[size-1] = input[tokenizer->pos++];
+		} else {
+			break;
+		}
+	}
+
+	return token;
+}
+
 token_t* read_other_tokens(tokenizer_t* tokenizer) {
 	token_t* token = malloc(sizeof(token_t));
 	char* input = tokenizer->input;
@@ -242,6 +266,8 @@ token_t* next_token(tokenizer_t* tokenizer) {
 			return read_string(tokenizer);
 		case '\"':
 			return read_string(tokenizer);
+		case ';':
+			return read_single_line_comment(tokenizer);
 
 		case '+':
 			token->type = ADD;
@@ -285,9 +311,6 @@ token_t* next_token(tokenizer_t* tokenizer) {
 			break;
 		case ',':
 			token->type = COMMA;
-			break;
-		case ';':
-			token->type = SEMICOLON;
 			break;
 		case '.':
 			token->type = ATTR;

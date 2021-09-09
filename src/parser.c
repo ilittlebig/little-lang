@@ -172,6 +172,8 @@ ast_t* parse_expr(parser_t* parser) {
 		case INT_NUMBER: return parse_int(parser);
 		case IDENTIFIER: return parse_id(parser);
 		case LEFT_PAREN: return parse_list(parser);
+
+		case SINGLE_LINE_COMMENT: { advance_token_type(parser, SINGLE_LINE_COMMENT); break; }
 		case END_OF_FILE: { break; }
 
 		default: {
