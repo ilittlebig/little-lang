@@ -89,6 +89,16 @@ ast_t* parse_id(parser_t* parser) {
 	return ast;
 }
 
+ast_t* parse_string(parser_t* parser) {
+	token_t* token = peek_token(parser);
+	advance_token_type(parser, STRING_LITERAL);
+
+	ast_t* ast = init_ast(AST_COMPOUND);
+	ast->value = token->value;
+
+	return ast;
+}
+
 ast_t* parse_args(parser_t* parser) {
 	ast_t* ast = init_ast(AST_COMPOUND);
 
@@ -135,10 +145,48 @@ ast_t* parse_block(parser_t* parser) {
 	return ast;
 }
 
-// TODO: A compound is e.g (return 0) or (int a 50)
 ast_t* parse_compound(parser_t* parser) {
 	ast_t* ast = init_ast(AST_COMPOUND);
-	vec_push_back(&ast->list, parse_expr(parser));
+	advance_token_type(parser, LEFT_PAREN);
+
+	while (peek_token(parser)->type != RIGHT_PAREN) {
+		token_t* token = peek_token(parser);
+		if (token->type == ASSIGN) {
+			advance_token_type(parser, ASSIGN);
+			ast->type = AST_ASSIGNMENT;
+
+			ast_t* var = parse_id(parser);
+			ast->name = var->name;
+			ast->value = var->value;
+			free(var);
+		} else if (token->type == STRING_LITERAL) {
+			ast_t* var = parse_id(parser);
+			free(var);
+		} else if (token->type == RETURN) {
+			ast->type = AST_RETURN;
+
+			ast_t* var = parse_return(parser);
+			ast->value = var->value;
+			free(var);
+
+			while (peek_token(parser)->type != RIGHT_PAREN) {
+				vec_push_back(&ast->list, parse_expr(parser));
+			}
+		} else if (token->type == IDENTIFIER) {
+			ast->type = AST_CALL;
+
+			ast_t* var = parse_id(parser);
+			ast->name = var->name;
+			free(var);
+
+			while (peek_token(parser)->type != RIGHT_PAREN) {
+				vec_push_back(&ast->list, parse_expr(parser));
+			}
+		}
+	}
+
+	advance_token_type(parser, RIGHT_PAREN);
+
 	return ast;
 }
 
@@ -147,7 +195,7 @@ ast_t* parse_return(parser_t* parser) {
 
 	ast_t* ast = init_ast(AST_RETURN);
 	ast->data_type = RETURN;
-	ast->value = parse_expr(parser)->value;
+	ast->value = parse_expr(parser);
 
 	return ast;
 }
@@ -166,13 +214,12 @@ ast_t* parse_expr(parser_t* parser) {
 	token_t* token = peek_token(parser);
 	switch (token->type) {
 		case FN: return parse_func(parser);
-		case RETURN: return parse_return(parser);
-		case INT: return parse_keyword(parser);
 
 		case INT_NUMBER: return parse_int(parser);
 		case IDENTIFIER: return parse_id(parser);
-		case LEFT_PAREN: return parse_list(parser);
+		case LEFT_PAREN: return parse_compound(parser);
 
+		case STRING_LITERAL: return parse_string(parser);
 		case SINGLE_LINE_COMMENT: { advance_token_type(parser, SINGLE_LINE_COMMENT); break; }
 		case END_OF_FILE: { break; }
 

@@ -6,6 +6,7 @@
 typedef enum ast_type_t {
 	AST_VARIABLE,
 	AST_INT,
+	AST_CALL,
 	AST_COMPOUND,
 	AST_RETURN,
 	AST_ASSIGNMENT,

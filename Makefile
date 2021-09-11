@@ -26,8 +26,8 @@ clean:
 
 run:
 	$(BIN_DIR)/parser
-	as -o $(BIN_DIR)/a.o $(BIN_DIR)/assembly.asm
-	ld -o $(BIN_DIR)/a $(BIN_DIR)/a.o
+	as $(BIN_DIR)/assembly.asm -o $(BIN_DIR)/a.o
+	ld $(BIN_DIR)/a.o -o $(BIN_DIR)/a
 
 -include $(DEPS)
 

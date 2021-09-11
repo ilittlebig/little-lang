@@ -138,16 +138,13 @@ token_t* read_string(tokenizer_t* tokenizer) {
 
 	while (true) {
 		const char c = input[tokenizer->pos];
-		if (c == '\\') {
-			tokenizer->pos += 2;
-		}
-
 		if (c != start_char && has_at_least(tokenizer, 0)) {
 			size++;
 			string = realloc(string, size*1);
 			string[size-1] = input[tokenizer->pos++];
 		} else if (c == start_char) {
 			is_closed = true;
+			tokenizer->pos++;
 			break;
 		} else {
 			break;
