@@ -38,14 +38,11 @@ static int get_variable_id(char* ident, vec_t* vec) {
 
 char* lil_print(ast_t* ast) {
 	char* movl_buff = malloc(sizeof(char));
-	char* template = "\tmovq $1, %%rax\n"
-					"\tmovq $1, %%rdi\n"
-					"\tmovq $LC%d, %%rsi\n"
-					"\tmovq $%d, %%rdx\n"
-					"\tsyscall\n"
-					"\tmovq $60, %%rax\n"
-					"\tmovq $0, %%rdi\n"
-					"\tsyscall\n";
+	char* template = "\tmovl $4, %%eax\n"
+					"\tmovl $1, %%ebx\n"
+					"\tmovl $LC%d, %%ecx\n"
+					"\tmovl $%d, %%edx\n"
+					"\tint $0x80\n";
 
 	vec_t vec = ast->list;
 	for (int i = 0; i < vec_length(&vec); ++i) {
@@ -112,14 +109,14 @@ char* asm_return(ast_t* ast, vec_t* vars) {
 	ast_t* ast_value = ast->value;
 	if (ast_value->type == AST_VARIABLE) {
 		int a = get_variable_id(ast_value->name, vars);
-		char* template = "\tmovl -%i(%%rbp), %%eax\n\tpopq %%rbp\n\tret\n";
+		char* template = "\tmovl -%i(%%ebp), %%eax\n\tpopl %%ebp\n\tret\n";
 		ret_buff = realloc(ret_buff, strlen(template) + 1);
 		snprintf(ret_buff, strlen(template) + 1, template, a * 4);
 	} else {
 		char* value = malloc(2048);
 		sprintf(value, "$%d", ast_value->value);
 
-		char* template = "\tmovl %s, %%eax\n\tpopq %%rbp\n\tret\n";
+		char* template = "\tmovl %s, %%eax\n\tpopl %%ebp\n\tret\n";
 		ret_buff = realloc(ret_buff, strlen(template) + strlen(value) + 1);
 		snprintf(ret_buff, strlen(template) + strlen(value) + 1, template, value);
 
@@ -137,7 +134,7 @@ char* asm_assignment(ast_t* ast, vec_t* vars) {
 	vec_push_back(vars, ast->name);
 	int id = get_variable_id(ast->name, vars);
 
-	char* template = "\tmovl %s, -%i(%%rbp)\n";
+	char* template = "\tmovl %s, -%i(%%ebp)\n";
 	assign_buff = realloc(assign_buff, strlen(template) + strlen(value) + 1);
 	snprintf(assign_buff, strlen(template) + strlen(value) + 1, template, value, id * 4);
 
@@ -181,7 +178,7 @@ char* asm_function(ast_t* ast) {
 	char* func_buff = malloc(sizeof(char));
 	*func_buff = '\0';
 
-	char* template = "%s:\n\tpushq %%rbp\n\tmovq %%rsp, %%rbp\n";
+	char* template = "%s:\n\tpushl %%ebp\n\tmovl %%esp, %%ebp\n";
 	func_buff = realloc(func_buff, strlen(func_buff) + strlen(template) + strlen(ast->name) + 1);
 	snprintf(func_buff, strlen(template) + strlen(ast->name), template, ast->name);
 
@@ -200,8 +197,8 @@ char* asm_function(ast_t* ast) {
 	}
 
 	if (strstr(func_buff, "ret") == 0) {
-		func_buff = realloc(func_buff, strlen(func_buff) + strlen("\tpopq %rbp\n\tret\n") + 1);
-		strcat(func_buff, "\tpopq %rbp\n\tret\n");
+		func_buff = realloc(func_buff, strlen(func_buff) + strlen("\tpopl %ebp\n\tret\n") + 1);
+		strcat(func_buff, "\tpopl %ebp\n\tret\n");
 	}
 
 	return func_buff;
@@ -212,8 +209,9 @@ void asm_init(vec_t asts) {
 					"\t.global _start\n"
 					"_start:\n"
 					"\tcall main\n"
-					"\tmovq $1, %rax\n"
-					"\tsyscall\n";
+					"\tmovl %eax, %ebx\n"
+					"\tmovl $1, %eax\n"
+					"\tint $0x80\n";
 	char* src = (char*)malloc(strlen(template) + 1);
 	strcpy(src, template);
 

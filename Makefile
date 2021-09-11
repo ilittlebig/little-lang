@@ -26,8 +26,8 @@ clean:
 
 run:
 	$(BIN_DIR)/parser
-	as $(BIN_DIR)/assembly.asm -o $(BIN_DIR)/a.o
-	ld $(BIN_DIR)/a.o -o $(BIN_DIR)/a
+	as --32 $(BIN_DIR)/assembly.asm -o $(BIN_DIR)/a.o
+	ld -m elf_i386 $(BIN_DIR)/a.o -o $(BIN_DIR)/a
 
 -include $(DEPS)
 

@@ -1,3 +1,5 @@
 fn main() : int {
-	(print "Hello World")
+	(= a 100)
+	(print "Hello World\n")
+	(return a)
 }
