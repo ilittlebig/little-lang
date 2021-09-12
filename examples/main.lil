@@ -1,5 +1,4 @@
 fn main() : int {
-	(= a 100)
-	(print "Hello World\n")
-	(return a)
+	(= a "this is a very long string that is being\tprinted by the next line..\n")
+	(print a)
 }

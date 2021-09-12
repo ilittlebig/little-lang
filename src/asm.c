@@ -28,7 +28,8 @@ static int get_id_from_str(char* ident, vec_t* vec) {
 
 static int get_variable_id(char* ident, vec_t* vec) {
 	for (int i = 0; i < vec_length(vec); ++i) {
-		char* string = vec_get(vec, i);
+		char** var = vec_get(vec, i);
+		char* string = var[0];
 		if (strcmp(string, ident) == 0) {
 			return i + 1;
 		}
@@ -36,23 +37,46 @@ static int get_variable_id(char* ident, vec_t* vec) {
 	return vec_length(vec) + 1;
 }
 
-char* lil_print(ast_t* ast) {
-	char* movl_buff = malloc(sizeof(char));
-	char* template = "\tmovl $4, %%eax\n"
-					"\tmovl $1, %%ebx\n"
-					"\tmovl $LC%d, %%ecx\n"
-					"\tmovl $%d, %%edx\n"
-					"\tint $0x80\n";
+static int get_variable_index(char* ident, vec_t* vec) {
+	for (int i = 0; i < vec_length(vec); ++i) {
+		char** var = vec_get(vec, i);
+		char* string = var[0];
+		if (strcmp(string, ident) == 0) {
+			return i;
+		}
+	}
+	return 0;
+}
 
+char* lil_print(ast_t* ast, vec_t* vars) {
+	char* movl_buff = malloc(sizeof(char));
 	vec_t vec = ast->list;
+
 	for (int i = 0; i < vec_length(&vec); ++i) {
 		ast_t* ast = vec_get(&vec, i);
-		if (ast->type == AST_COMPOUND) {
+		if (ast->type == AST_STRING) {
+			char* template = "\tmovl $4, %%eax\n"
+							"\tmovl $1, %%ebx\n"
+							"\tmovl $LC%d, %%ecx\n"
+							"\tmovl $%d, %%edx\n"
+							"\tint $0x80\n";
+
 			int id = get_id_from_str(ast->value, &strings);
 			movl_buff = realloc(movl_buff, strlen(movl_buff) + strlen(template) + 100);
 			sprintf(movl_buff, template, id, strlen(vec_get(&strings, id)));
 		} else if (ast->type == AST_VARIABLE) {
+			char* template = "\tmovl $4, %%eax\n"
+							"\tmovl $1, %%ebx\n"
+							"\tmovl -%i(%%ebp), %%ecx\n"
+							"\tmovl $%i, %%edx\n"
+							"\tint $0x80\n";
 
+			int var_id = get_variable_id(ast->name, vars);
+			int var_index = get_variable_index(ast->name, vars);
+			char** v = vec_get(vars, var_index);
+
+			movl_buff = realloc(movl_buff, strlen(movl_buff) + strlen(template) + 100);
+			sprintf(movl_buff, template, var_id * 4, strlen(v[1]));
 		}
 	}
 
@@ -75,13 +99,13 @@ void asm_string(ast_t* ast) {
 	}
 }
 
-char* asm_call(ast_t* ast) {
+char* asm_call(ast_t* ast, vec_t* vars) {
 	char* call_buff = malloc(sizeof(char));
 
 	vec_t vec = ast->list;
 	for (int i = 0; i < vec_length(&vec); ++i) {
 		ast_t* ast = vec_get(&vec, i);
-		if (ast->type == AST_COMPOUND) {
+		if (ast->type == AST_STRING) {
 			asm_string(ast);
 		} else if (ast->type == AST_VARIABLE) {
 		} else if (ast->type == AST_INT) {
@@ -93,7 +117,7 @@ char* asm_call(ast_t* ast) {
 
 	if (strcmp(ast->name, "print") == 0) {
 		free(call_buff);
-		return lil_print(ast);
+		return lil_print(ast, vars);
 	}
 
 	char* template = "\tcall %s\n";
@@ -108,10 +132,10 @@ char* asm_return(ast_t* ast, vec_t* vars) {
 
 	ast_t* ast_value = ast->value;
 	if (ast_value->type == AST_VARIABLE) {
-		int a = get_variable_id(ast_value->name, vars);
+		int var_id = get_variable_id(ast_value->name, vars);
 		char* template = "\tmovl -%i(%%ebp), %%eax\n\tpopl %%ebp\n\tret\n";
 		ret_buff = realloc(ret_buff, strlen(template) + 1);
-		snprintf(ret_buff, strlen(template) + 1, template, a * 4);
+		snprintf(ret_buff, strlen(template) + 1, template, var_id * 4);
 	} else {
 		char* value = malloc(2048);
 		sprintf(value, "$%d", ast_value->value);
@@ -128,17 +152,35 @@ char* asm_return(ast_t* ast, vec_t* vars) {
 
 char* asm_assignment(ast_t* ast, vec_t* vars) {
 	char* assign_buff = malloc(sizeof(char));
-	char* value = malloc(2048);
-	sprintf(value, "$%d", ast->value);
 
-	vec_push_back(vars, ast->name);
-	int id = get_variable_id(ast->name, vars);
+	ast_t* ast_value = ast->value;
+	if (ast_value->type == AST_STRING) {
+		char** vec = calloc(strlen(ast->name) + strlen(ast_value->value), sizeof(char));
+		vec[0] = ast->name;
+		vec[1] = ast_value->value;
 
-	char* template = "\tmovl %s, -%i(%%ebp)\n";
-	assign_buff = realloc(assign_buff, strlen(template) + strlen(value) + 1);
-	snprintf(assign_buff, strlen(template) + strlen(value) + 1, template, value, id * 4);
+		vec_push_back(vars, vec);
+		asm_string(ast_value);
 
-	free(value);
+		int id1 = get_id_from_str(ast_value->value, &strings);
+		int id2 = get_variable_id(ast->name, vars);
+
+		char* template = "\tmovl $LC%i, -%i(%%ebp)\n";
+		assign_buff = realloc(assign_buff, strlen(template) + strlen(ast_value->value) + 1);
+		sprintf(assign_buff, template, id1, id2 * 4);
+	} else if (ast_value->type == AST_INT) {
+		char* value = malloc(2048);
+		sprintf(value, "$%d", ast_value->value);
+
+		vec_push_back(vars, ast->name);
+		int id = get_variable_id(ast->name, vars);
+
+		char* template = "\tmovl %s, -%i(%%ebp)\n";
+		assign_buff = realloc(assign_buff, strlen(template) + strlen(value) + 1);
+		snprintf(assign_buff, strlen(template) + strlen(value) + 1, template, value, id * 4);
+
+		free(value);
+	}
 
 	return assign_buff;
 }
@@ -161,7 +203,7 @@ char* asm_block(ast_t* ast, vec_t* vars) {
 			block_buff = realloc(block_buff, strlen(block_buff) + strlen(comp_buff) + 1);
 			strcat(block_buff, comp_buff);
 		} else if (ast->type == AST_CALL) {
-			char* comp_buff = asm_call(ast);
+			char* comp_buff = asm_call(ast, vars);
 			block_buff = realloc(block_buff, strlen(block_buff) + strlen(comp_buff) + 1);
 			strcat(block_buff, comp_buff);
 		} else if (ast->type == AST_BLOCK) {

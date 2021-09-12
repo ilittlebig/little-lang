@@ -21,6 +21,7 @@ void advance_token_type(parser_t* parser, token_type_t token_type) {
 	if (token && token->type == token_type) {
 		parser->tokens_parsed++;
 	} else {
+		advance_token(parser);
 		printf("[Parser]: Unexpected token '%s' was expecting '%s'\n", token_to_str(token->type), token_to_str(token_type));
 	}
 }
@@ -63,19 +64,6 @@ ast_t* parse_id(parser_t* parser) {
 
 	advance_token_type(parser, IDENTIFIER);
 
-	switch(peek_token(parser)->type) {
-		case INT_NUMBER:
-			ast_t* ast = init_ast(AST_ASSIGNMENT);
-			ast->name = value;
-
-			ast_t* expr_value = parse_expr(parser);
-			ast->data_type = expr_value->data_type;
-			ast->value = expr_value->value;
-
-			return ast;
-		default: break;
-	}
-
 	ast_t* ast = init_ast(AST_VARIABLE);
 	ast->name = value;
 	ast->data_type = IDENTIFIER;
@@ -93,7 +81,7 @@ ast_t* parse_string(parser_t* parser) {
 	token_t* token = peek_token(parser);
 	advance_token_type(parser, STRING_LITERAL);
 
-	ast_t* ast = init_ast(AST_COMPOUND);
+	ast_t* ast = init_ast(AST_STRING);
 	ast->value = token->value;
 
 	return ast;
@@ -157,10 +145,13 @@ ast_t* parse_compound(parser_t* parser) {
 
 			ast_t* var = parse_id(parser);
 			ast->name = var->name;
-			ast->value = var->value;
-			free(var);
-		} else if (token->type == STRING_LITERAL) {
-			ast_t* var = parse_id(parser);
+
+			if (peek_token(parser)->type == STRING_LITERAL) {
+				ast->value = parse_string(parser);
+			} else if (peek_token(parser)->type == INT_NUMBER) {
+				ast->value = parse_int(parser);
+			}
+
 			free(var);
 		} else if (token->type == RETURN) {
 			ast->type = AST_RETURN;
