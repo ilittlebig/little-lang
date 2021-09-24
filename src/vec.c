@@ -10,6 +10,10 @@ int vec_init(vec_t* vec, size_t init_capacity) {
 	return 0;
 }
 
+int vec_has_element(vec_t* vec, void* element) {
+
+}
+
 int vec_length(vec_t* vec) {
 	return vec->size;
 }

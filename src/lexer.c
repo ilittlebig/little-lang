@@ -1,5 +1,17 @@
 #include "lexer.h"
 
+bool is_keyword(token_type_t token_type) {
+	if (token_type == FN) { return true; }
+	else if (token_type == INT) { return true; }
+	else if (token_type == FLOAT) { return true; }
+	else if (token_type == STRING) { return true; }
+	else if (token_type == VOID) { return true; }
+	else if (token_type == RETURN) { return true; }
+	else if (token_type == DEFVAR) { return true; }
+	else if (token_type == FUNCALL) { return true; }
+	else { return false; }
+}
+
 bool starts_with(const char* str1, const char* str2, const int pos) {
 	for (int i = 0; i < strlen(str2); i++) {
 		if (str1[pos + i] != str2[i]) {
@@ -41,12 +53,16 @@ token_type_t str_to_token(char* word) {
 		token_type = INT;
 	} else if (strcmp(word, "float") == 0) {
 		token_type = FLOAT;
-	} else if (strcmp(word, "char") == 0) {
-		token_type = CHAR;
+	} else if (strcmp(word, "string") == 0) {
+		token_type = STRING;
 	} else if (strcmp(word, "void") == 0) {
 		token_type = VOID;
 	} else if (strcmp(word, "return") == 0) {
 		token_type = RETURN;
+	} else if (strcmp(word, "DEFVAR") == 0) {
+		token_type = DEFVAR;
+	} else if (strcmp(word, "FUNCALL") == 0) {
+		token_type = FUNCALL;
 	} else {
 		token_type = UNIDENTIFIED;
 	}
@@ -59,7 +75,7 @@ char* token_to_str(token_type_t token_type) {
 		case RETURN: return "RETURN";
 		case INT: return "INT";
 		case FLOAT: return "FLOAT";
-		case CHAR: return "CHAR";
+		case STRING: return "STRING";
 		case VOID: return "VOID";
 		case INT_NUMBER: return "INT_NUMBER";
 		case IDENTIFIER: return "IDENTIFIER";
@@ -87,11 +103,12 @@ char* token_to_str(token_type_t token_type) {
 		case COMMA: return "COMMA";
 		case SEMICOLON: return "SEMICOLON";
 		case ATTR: return "ATTR";
+		case SINGLE_LINE_COMMENT: return "SINGLE_LINE_COMMENT";
 		case STRING_LITERAL: return "STRING_LITERAL";
 		case UNCLOSED_STRING_LITERAL: return "UNCLOSED_STRING_LITERAL";
 		case WHITESPACE: return "WHITESPACE";
 		case END_OF_FILE: return "END_OF_FILE";
-		default: { return "UNIDENTIFIED"; }
+		default: return "UNIDENTIFIED";
 	}
 }
 
@@ -117,11 +134,8 @@ token_t* read_digit(tokenizer_t* tokenizer) {
 		}
 	}
 
-	int* number;
-	sscanf(digit, "%i", &number);
-
 	token->type = INT_NUMBER;
-	token->value = number;
+	token->value = digit;
 	return token;
 }
 
@@ -131,7 +145,7 @@ token_t* read_string(tokenizer_t* tokenizer) {
 	char* input = tokenizer->input;
 	const char start_char = input[tokenizer->pos++];
 
-	char* string = calloc(0, sizeof(char));
+	char* string = calloc(1, sizeof(char));
 	int size = 0;
 
 	bool is_closed = false;
@@ -140,7 +154,7 @@ token_t* read_string(tokenizer_t* tokenizer) {
 		const char c = input[tokenizer->pos];
 		if (c != start_char && has_at_least(tokenizer, 0)) {
 			size++;
-			string = realloc(string, size*1);
+			string = realloc(string, size);
 			string[size-1] = input[tokenizer->pos++];
 		} else if (c == start_char) {
 			is_closed = true;
@@ -150,14 +164,15 @@ token_t* read_string(tokenizer_t* tokenizer) {
 			break;
 		}
 	}
+	string[size] = '\0';
 
 	if (is_closed) {
 		token->type = STRING_LITERAL;
 	} else {
 		token->type = UNCLOSED_STRING_LITERAL;
 	}
-	token->value = string;
 
+	token->value = string;
 	return token;
 }
 
@@ -182,6 +197,7 @@ token_t* read_single_line_comment(tokenizer_t* tokenizer) {
 		}
 	}
 
+	free(string);
 	return token;
 }
 
@@ -233,19 +249,21 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 	}
 
 	if (is_valid_ident_start(tokenizer)) {
-		char* word = calloc(0, sizeof(char));
+		char* word = malloc(sizeof(char));
 		int size = 0;
 
 		while (is_valid_ident(tokenizer)) {
 			size++;
-			word = realloc(word, size*1);
+			word = realloc(word, size + 1);
 			word[size-1] = input[tokenizer->pos++];
 		}
+		word[size] = '\0';
 
 		token_type_t token_type = str_to_token(word);
-		if (token_type != UNIDENTIFIED) { // KEYWORD
+		if (token_type != UNIDENTIFIED) {
 			token->type = token_type;
-		} else { // IDENTIFIER
+			free(word);
+		} else {
 			token->type = IDENTIFIER;
 			token->value = word;
 		}
@@ -260,10 +278,13 @@ token_t* next_token(tokenizer_t* tokenizer) {
 
 	switch(c) {
 		case '\'':
+			free(token);
 			return read_string(tokenizer);
 		case '\"':
+			free(token);
 			return read_string(tokenizer);
 		case ';':
+			free(token);
 			return read_single_line_comment(tokenizer);
 
 		case '+':
@@ -318,6 +339,7 @@ token_t* next_token(tokenizer_t* tokenizer) {
 	}
 
 	if (isdigit(c)) {
+		free(token);
 		return read_digit(tokenizer);
 	} else if (isspace(c) != 0) {
 		token->type = WHITESPACE;
@@ -325,11 +347,13 @@ token_t* next_token(tokenizer_t* tokenizer) {
 
 	// Check if there are any tokens with two or more characters
 	if (token->type == UNIDENTIFIED) {
+		free(token);
 		return read_other_tokens(tokenizer);
 	} else {
 		tokenizer->pos++;
-		return token;
 	}
+
+	return token;
 }
 
 vec_t tokenize(const char* input) {
@@ -344,6 +368,8 @@ vec_t tokenize(const char* input) {
 		token_t* token = next_token(tokenizer);
 		if (token->type != WHITESPACE) {
 			vec_push_back(&tokens, token);
+		} else {
+			free(token);
 		}
 	}
 
@@ -351,6 +377,8 @@ vec_t tokenize(const char* input) {
 	token->type = END_OF_FILE;
 	vec_push_back(&tokens, token);
 
+	free(tokenizer->input);
 	free(tokenizer);
+
 	return tokens;
 }

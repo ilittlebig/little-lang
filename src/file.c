@@ -14,6 +14,7 @@ void write_file(const char* buff, const char* filename) {
 	}
 
 	fprintf(file, "%s", buff);
+	fclose(file);
 }
 
 char* read_file(const char* filename) {
@@ -27,12 +28,12 @@ char* read_file(const char* filename) {
 		exit(1);
 	}
 
-	char* buffer = (char*)calloc(1, sizeof(char));
-	buffer[0] = '\0';
+	char* buff = malloc(sizeof(char));
+	buff[0] = '\0';
 
 	while (getline(&line, &len, file) != -1) {
-		buffer = (char*)realloc(buffer, (strlen(buffer) + strlen(line) + 1) * sizeof(char));
-		strcat(buffer, line);
+		buff = realloc(buff, strlen(buff) + strlen(line) + 1);
+		strcat(buff, line);
 	}
 
 	fclose(file);
@@ -40,5 +41,5 @@ char* read_file(const char* filename) {
 		free(line);
 	}
 
-	return buffer;
+	return buff;
 }

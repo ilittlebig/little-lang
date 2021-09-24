@@ -1,4 +1,26 @@
-fn main() : int {
-	(= a "this is a very long string that is being\tprinted by the next line..\n")
+fn prrr() : void {
+	(print "prrrrr like a very long string this is like prrrrrrrrrrr a good test maybe?\n")
+}
+
+fn test(string b, string c, string d) : void {
+	(print b)
+	(= a "Hi?\n")
+	(= b "I like dogs\n")
 	(print a)
+	(= a "Hiiiiiii?\n")
+	(print b)
+	(print a)
+	(prrr)
+	(print c)
+	(print d)
+}
+
+fn main() : int {
+	(= gg "world\n")
+	(print "Test Print\n")
+	(print gg)
+	(= string_test "I like to eat dinner\n")
+	(print gg)
+	(print "Hello World\n")
+	(test string_test "hello\n" "hi\n")
 }

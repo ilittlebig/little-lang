@@ -14,9 +14,11 @@ typedef enum token_type_t {
 	FN,
 	INT,
 	FLOAT,
-	CHAR,
+	STRING,
 	VOID,
 	RETURN,
+	DEFVAR,
+	FUNCALL,
 
 	INT_NUMBER,
 	IDENTIFIER,
@@ -71,6 +73,7 @@ typedef struct tokenizer_t {
 	size_t pos;
 } tokenizer_t;
 
+bool is_keyword(token_type_t token_type);
 char* token_to_str(token_type_t);
 vec_t tokenize(const char*);
 
