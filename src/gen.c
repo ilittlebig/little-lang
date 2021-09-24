@@ -119,8 +119,10 @@ void gen(vec_t asts) {
 		emit("%s:", func->name);
 		emit("	pushl %%ebp");
 		emit("	movl %%esp, %%ebp");
-		emit("	sub $%d, %%esp", vars*4);
 
+		if (vars > 0) {
+			emit("	sub $%d, %%esp", vars*4);
+		}
 		emit_stmt(func->body);
 
 		emit("	leave");

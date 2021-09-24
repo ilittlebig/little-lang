@@ -15,7 +15,12 @@ fn test(string b, string c, string d) : void {
 	(print d)
 }
 
+fn s() : void {
+
+}
+
 fn main() : int {
+	(s)
 	(= gg "world\n")
 	(print "Test Print\n")
 	(print gg)
