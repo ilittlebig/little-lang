@@ -132,7 +132,17 @@ ast_t* parse_keyword(parser_t* parser) {
 			keyword->type_specifier = RETURN;
 
 			if (peek_token(parser)->type != RIGHT_PAREN) {
-				keyword->value = parse_expr(parser);
+				ast_t* expr = parse_expr(parser);
+				if (expr->type == AST_IDENTIFIER) {
+					ast_t* var = find_var(expr->name);
+					if (var) {
+						ast_t* a = var->value;
+						expr->value = a->value;
+					} else {
+						go_error_at(parser->location, "undefined reference to '%s'", expr->name);
+					}
+				}
+				keyword->value = expr;
 			}
 			advance_token_type(parser, RIGHT_PAREN);
 

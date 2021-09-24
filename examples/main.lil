@@ -28,4 +28,7 @@ fn main() : int {
 	(print gg)
 	(print "Hello World\n")
 	(test string_test "hello\n" "hi\n")
+	(= a 10)
+	(return a)
+	; (return 20)
 }

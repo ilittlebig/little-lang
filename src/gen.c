@@ -54,6 +54,14 @@ void emit_literal(ast_t* literal) {
 }
 
 void emit_keyword(ast_t* expr) {
+	switch(expr->type_specifier) {
+		case RETURN:
+			ast_t* ret = expr->value;
+			emit("	movl $%s, %%eax", ret->value);
+			return;
+		default:
+			return;
+	}
 }
 
 void emit_assignment(ast_t* expr) {
