@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "gen.h"
-#include "builtins.h"
 
 static void emit(char* fmt, ...) {
 	va_list args;
@@ -149,8 +148,6 @@ void gen(vec_t asts) {
 		emit("	leave");
 		emit("	ret");
 	}
-
-	builtins_init(outputfp);
 
 	fclose(outputfp);
 }

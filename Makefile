@@ -1,6 +1,7 @@
 TARGET_EXEC ?= parser
 
 BIN_DIR ?= ./bin
+LIB_DIR ?= ./lib
 SRC_DIRS ?= ./src
 
 SRCS := $(shell find $(SRC_DIRS) -name *.c)
@@ -26,7 +27,7 @@ clean:
 
 run:
 	$(BIN_DIR)/parser examples/main.lil
-	as --32 $(BIN_DIR)/assembly.asm -o $(BIN_DIR)/a.o
+	as --32 $(BIN_DIR)/assembly.asm $(LIB_DIR)/stdlib.asm -o $(BIN_DIR)/a.o
 	ld -m elf_i386 $(BIN_DIR)/a.o -o $(BIN_DIR)/a
 
 -include $(DEPS)
