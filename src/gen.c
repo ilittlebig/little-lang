@@ -53,15 +53,22 @@ void emit_literal(ast_t* literal) {
 	}
 }
 
-void emit_keyword(ast_t* expr) {
-	switch(expr->type_specifier) {
-		case RETURN:
-			ast_t* ret = expr->value;
-			emit("	movl $%s, %%eax", ret->value);
-			return;
-		default:
-			return;
+void emit_return(ast_t* expr) {
+	ast_t* ret = expr->value;
+	if (ret->type == AST_INT) {
+		emit("	movl $%s, %%eax", ret->value);
+	} else if (ret->type == AST_STRING) {
+		emit_literal(ret);
+		emit("	movl $%s, %%eax", ret->label);
+	} else if (ret->type == AST_IDENTIFIER) {
+		emit("	movl %d(%%ebp), %%eax", ret->offset);
 	}
+}
+
+void emit_funcall(ast_t* expr) {
+	expr->name = expr->value;
+	emit_call(expr);
+	emit("	movl %%eax, %d(%%ebp)", expr->offset);
 }
 
 void emit_assignment(ast_t* expr) {
@@ -71,6 +78,9 @@ void emit_assignment(ast_t* expr) {
 	} else if (expr_value->type == AST_STRING) {
 		emit_literal(expr_value);
 		emit("	movl $%s, %d(%%ebp)", expr_value->label, expr->offset);
+	} else if (expr_value->type == AST_IDENTIFIER) {
+		emit("	movl %d(%%ebp), %%eax", expr_value->offset);
+		emit("	movl %%eax, %d(%%ebp)", expr->offset);
 	}
 }
 
@@ -95,7 +105,8 @@ void emit_expr(ast_t* expr) {
 		case AST_INT:		 emit_number(expr);		return;
 		case AST_CALL:		 emit_call(expr);		return;
 		case AST_STRING:	 emit_literal(expr);	return;
-		case AST_KEYWORD:	 emit_keyword(expr);	return;
+		case AST_RETURN:	 emit_return(expr);		return;
+		case AST_FUNCALL:	 emit_funcall(expr);	return;
 		case AST_ASSIGNMENT: emit_assignment(expr);	return;
 		default:
 			return;

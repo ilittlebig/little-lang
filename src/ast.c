@@ -3,14 +3,16 @@
 char* ast_type_to_str(ast_type_t ast_type) {
 	switch (ast_type) {
 		case AST_IDENTIFIER: return "AST_IDENTIFIER";
-		case AST_INT: return "AST_INT";
-		case AST_STRING: return "AST_STRING";
-		case AST_CALL: return "AST_CALL";
-		case AST_COMPOUND: return "AST_COMPOUND";
-		case AST_KEYWORD: return "AST_KEYWORD";
+		case AST_INT:		 return "AST_INT";
+		case AST_STRING:	 return "AST_STRING";
+		case AST_CALL:		 return "AST_CALL";
+		case AST_COMPOUND:	 return "AST_COMPOUND";
+		case AST_RETURN:	 return "AST_RETURN";
+		case AST_DEFVAR:	 return "AST_DEFVAR";
+		case AST_FUNCALL:	 return "AST_FUNCALL";
 		case AST_ASSIGNMENT: return "AST_ASSIGNMENT";
-		case AST_FUNCTION: return "AST_FUNCTION";
-		case AST_BLOCK: return "AST_BLOCK";
+		case AST_FUNCTION:	 return "AST_FUNCTION";
+		case AST_BLOCK:		 return "AST_BLOCK";
 	}
 }
 

@@ -1,17 +1,5 @@
 #include "lexer.h"
 
-bool is_keyword(token_type_t token_type) {
-	if (token_type == FN) { return true; }
-	else if (token_type == INT) { return true; }
-	else if (token_type == FLOAT) { return true; }
-	else if (token_type == STRING) { return true; }
-	else if (token_type == VOID) { return true; }
-	else if (token_type == RETURN) { return true; }
-	else if (token_type == DEFVAR) { return true; }
-	else if (token_type == FUNCALL) { return true; }
-	else { return false; }
-}
-
 bool starts_with(const char* str1, const char* str2, const int pos) {
 	for (int i = 0; i < strlen(str2); i++) {
 		if (str1[pos + i] != str2[i]) {
@@ -59,9 +47,9 @@ token_type_t str_to_token(char* word) {
 		token_type = VOID;
 	} else if (strcmp(word, "return") == 0) {
 		token_type = RETURN;
-	} else if (strcmp(word, "DEFVAR") == 0) {
+	} else if (strcmp(word, "defvar") == 0) {
 		token_type = DEFVAR;
-	} else if (strcmp(word, "FUNCALL") == 0) {
+	} else if (strcmp(word, "funcall") == 0) {
 		token_type = FUNCALL;
 	} else {
 		token_type = UNIDENTIFIED;

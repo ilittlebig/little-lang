@@ -1,34 +1,11 @@
-fn prrr() : void {
-	(print "prrrrr like a very long string this is like prrrrrrrrrrr a good test maybe?\n")
+fn test_func(string ping) : int {
+	(print ping)
+	(= pong "Pong!\n")
+	(return pong)
 }
 
-fn test(string b, string c, string d) : void {
-	(print b)
-	(= a "Hi?\n")
-	(= b "I like dogs\n")
-	(print a)
-	(= a "Hiiiiiii?\n")
-	(print b)
-	(print a)
-	(prrr)
-	(print c)
-	(print d)
-}
-
-fn s() : void {
-
-}
-
-fn main() : int {
-	(s)
-	(= gg "world\n")
-	(print "Test Print\n")
-	(print gg)
-	(= string_test "I like to eat dinner\n")
-	(print gg)
-	(print "Hello World\n")
-	(test string_test "hello\n" "hi\n")
-	(= a 10)
-	(return a)
-	; (return 20)
+fn main() : void {
+	(defvar pong test_func)
+	(funcall pong "Ping!\n")
+	(print pong)
 }

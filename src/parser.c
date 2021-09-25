@@ -103,7 +103,7 @@ ast_t* parse_body(parser_t* parser) {
 	while (peek_token(parser)->type != END_OF_FILE && peek_token(parser)->type != RIGHT_CURLY) {
 		ast_t* expr = parse_expr(parser);
 		if (!expr) { continue; }
-		if (expr->type == AST_ASSIGNMENT) {
+		if (expr->type == AST_ASSIGNMENT || expr->type == AST_DEFVAR) {
 			ast_t* var = find_var(expr->name);
 			if (var) {
 				expr->offset = var->offset;
@@ -122,40 +122,84 @@ ast_t* parse_body(parser_t* parser) {
 	return body;
 }
 
-ast_t* parse_keyword(parser_t* parser) {
-	ast_t* keyword = init_ast(AST_KEYWORD);
-	token_t* token = peek_token(parser);
-
-	switch(token->type) {
-		case RETURN:
-			advance_token_type(parser, RETURN);
-			keyword->type_specifier = RETURN;
-
-			if (peek_token(parser)->type != RIGHT_PAREN) {
-				ast_t* expr = parse_expr(parser);
-				if (expr->type == AST_IDENTIFIER) {
-					ast_t* var = find_var(expr->name);
-					if (var) {
-						ast_t* a = var->value;
-						expr->value = a->value;
-					} else {
-						go_error_at(parser->location, "undefined reference to '%s'", expr->name);
-					}
-				}
-				keyword->value = expr;
-			}
-			advance_token_type(parser, RIGHT_PAREN);
-
-			break;
-		case DEFVAR:
-			break;
-		case FUNCALL:
-			break;
-		default:
-			break;
+void push_args(parser_t* parser, ast_t* compound) {
+	if (peek_token(parser)->type != RIGHT_PAREN) {
+		vec_init(&compound->list, 1);
 	}
 
-	return keyword;
+	int offset = 8;
+	while (peek_token(parser)->type != RIGHT_PAREN) {
+		ast_t* arg = parse_expr(parser);
+		if (arg->type == AST_IDENTIFIER && current_func) {
+			ast_t* ast = find_var(arg->name);
+			if (ast) {
+				// TODO: fix a better solution for params
+				if (ast->value) {
+					ast_t* var = ast->value;
+					arg->value = var->value;
+				}
+				arg->arg_offset = ast->offset;
+				arg->type_specifier = ast->type_specifier;
+			} else {
+				go_error_at(parser->location, "undefined reference to '%s'", arg->name);
+			}
+		}
+		arg->offset = offset;
+		offset += 4;
+
+		vec_push_back(&compound->list, arg);
+	}
+}
+
+ast_t* parse_return(parser_t* parser) {
+	ast_t* ret = init_ast(AST_RETURN);
+	advance_token_type(parser, RETURN);
+
+	if (peek_token(parser)->type != RIGHT_PAREN) {
+		ast_t* expr = parse_expr(parser);
+		if (expr->type == AST_IDENTIFIER) {
+			ast_t* var = find_var(expr->name);
+			if (var) {
+				expr->offset = var->offset;
+			} else {
+				go_error_at(parser->location, "undefined reference to '%s'", expr->name);
+			}
+		}
+		ret->value = expr;
+	}
+
+	advance_token_type(parser, RIGHT_PAREN);
+	return ret;
+}
+
+ast_t* parse_defvar(parser_t* parser) {
+	ast_t* defvar = init_ast(AST_DEFVAR);
+	advance_token_type(parser, DEFVAR);
+
+	defvar->name = parse_identifier(parser)->name;
+	defvar->value = parse_identifier(parser)->name;
+
+	advance_token_type(parser, RIGHT_PAREN);
+	return defvar;
+}
+
+ast_t* parse_funcall(parser_t* parser) {
+	ast_t* funcall = init_ast(AST_FUNCALL);
+	advance_token_type(parser, FUNCALL);
+
+	funcall->name = parse_identifier(parser)->name;
+	push_args(parser, funcall);
+
+	ast_t* var = find_var(funcall->name);
+	if (var) {
+		funcall->value = var->value;
+		funcall->offset = var->offset;
+	} else {
+		go_error_at(parser->location, "undefined reference to '%s'", funcall->name);
+	}
+
+	advance_token_type(parser, RIGHT_PAREN);
+	return funcall;
 }
 
 ast_t* parse_identifier(parser_t* parser) {
@@ -194,62 +238,53 @@ ast_t* parse_compound(parser_t* parser) {
 	ast_t* compound = init_ast(AST_COMPOUND);
 	advance_token_type(parser, LEFT_PAREN);
 
-	while (peek_token(parser)->type != RIGHT_PAREN) {
-		token_t* token = peek_token(parser);
-		if (token->type == ASSIGN) {
-			advance_token_type(parser, ASSIGN);
-			compound->type = AST_ASSIGNMENT;
+	token_t* token = peek_token(parser);
+	if (token->type == ASSIGN) {
+		advance_token_type(parser, ASSIGN);
+		compound->type = AST_ASSIGNMENT;
 
-			ast_t* identifier = parse_expr(parser);
-			if (identifier != NULL && identifier->type == AST_IDENTIFIER) {
-				compound->name = identifier->name;
-			} else {
-				go_error_at(parser->location, "expected identifier after '=' token");
-			}
-
-			ast_t* expr = parse_expr(parser);
-			if (expr != NULL) {
-				compound->value = expr;
-			} else {
-				go_error_at(parser->location, "expected compound expression");
-			}
-		} else if (token->type == IDENTIFIER) {
-			ast_t* identifier = parse_identifier(parser);
+		ast_t* identifier = parse_expr(parser);
+		if (identifier != NULL && identifier->type == AST_IDENTIFIER) {
 			compound->name = identifier->name;
-			compound->type = AST_CALL;
-
-			if (peek_token(parser)->type != RIGHT_PAREN) {
-				vec_init(&compound->list, 1);
-			}
-
-			int offset = 8;
-			while (peek_token(parser)->type != RIGHT_PAREN) {
-				ast_t* arg = parse_expr(parser);
-				if (arg->type == AST_IDENTIFIER && current_func) {
-					ast_t* ast = find_var(arg->name);
-					if (ast) {
-						// TODO: fix a better solution for params
-						if (ast->value) {
-							ast_t* var = ast->value;
-							arg->value = var->value;
-						}
-						arg->arg_offset = ast->offset;
-						arg->type_specifier = ast->type_specifier;
-					} else {
-						go_error_at(parser->location, "undefined reference to '%s'", arg->name);
-					}
-				}
-				arg->offset = offset;
-				offset += 4;
-
-				vec_push_back(&compound->list, arg);
-			}
-
-			free(identifier);
-		} else if (is_keyword(token->type)) {
-			free(compound);
-			return parse_keyword(parser);
+		} else {
+			go_error_at(parser->location, "expected identifier after '=' token");
 		}
+
+		ast_t* expr = parse_expr(parser);
+		if (expr != NULL) {
+			if (expr->type == AST_IDENTIFIER) {
+				ast_t* var = find_var(expr->name);
+				if (var) {
+					expr->offset = var->offset;
+				} else {
+					go_error_at(parser->location, "undefined reference to '%s'", expr->name);
+				}
+			}
+			compound->value = expr;
+		} else {
+			go_error_at(parser->location, "expected compound expression");
+		}
+
+		if (peek_token(parser)->type != RIGHT_PAREN) {
+			go_error_at(parser->location, "expected ')' to close compound expression");
+		}
+	} else if (token->type == IDENTIFIER) {
+		ast_t* identifier = parse_identifier(parser);
+		compound->name = identifier->name;
+		compound->type = AST_CALL;
+
+		push_args(parser, compound);
+
+		free(identifier);
+	} else if (token->type == RETURN) {
+		free(compound);
+		return parse_return(parser);
+	} else if (token->type == DEFVAR) {
+		free(compound);
+		return parse_defvar(parser);
+	} else if (token->type == FUNCALL) {
+		free(compound);
+		return parse_funcall(parser);
 	}
 
 	advance_token_type(parser, RIGHT_PAREN);
@@ -265,18 +300,17 @@ ast_t* parse_expr(parser_t* parser) {
 	token_t* token = peek_token(parser);
 
 	switch(token->type) {
-		case FN: return parse_func(parser);
-		case IDENTIFIER: return parse_identifier(parser);
+		case FN:		     return parse_func(parser);
+		case IDENTIFIER:	 return parse_identifier(parser);
 		case STRING_LITERAL: return parse_string(parser);
-		case INT_NUMBER: return parse_int(parser);
-		case LEFT_PAREN: return parse_compound(parser);
+		case RETURN:		 return parse_return(parser); // USELESS?
+		case INT_NUMBER:	 return parse_int(parser);
+		case LEFT_PAREN:	 return parse_compound(parser);
 		case SINGLE_LINE_COMMENT:
 			advance_token_type(parser, SINGLE_LINE_COMMENT);
 			break;
 		default:
-			if (is_keyword(token->type)) {
-				return parse_keyword(parser);
-			}
+			break;
 	}
 
 	return NULL;
