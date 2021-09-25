@@ -309,6 +309,9 @@ ast_t* parse_expr(parser_t* parser) {
 		case SINGLE_LINE_COMMENT:
 			advance_token_type(parser, SINGLE_LINE_COMMENT);
 			break;
+		case MULTI_LINE_COMMENT:
+			advance_token_type(parser, MULTI_LINE_COMMENT);
+			break;
 		default:
 			break;
 	}

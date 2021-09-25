@@ -177,10 +177,36 @@ token_t* read_single_line_comment(tokenizer_t* tokenizer) {
 	while (true) {
 		const char c = input[tokenizer->pos];
 		if (c != '\n' && has_at_least(tokenizer, 0)) {
-			size++;
-			string = realloc(string, size*1);
+			string = realloc(string, ++size);
 			string[size-1] = input[tokenizer->pos++];
 		} else {
+			break;
+		}
+	}
+
+	free(string);
+	return token;
+}
+
+token_t* read_multi_line_comment(tokenizer_t* tokenizer) {
+	token_t* token = malloc(sizeof(token_t));
+	token->type = MULTI_LINE_COMMENT;
+
+	char* input = tokenizer->input;
+	const char start_char = input[tokenizer->pos];
+
+	char* string = calloc(0, sizeof(char));
+	int size = 0;
+
+	while (true) {
+		if (!starts_with(input, "*/", tokenizer->pos) && has_at_least(tokenizer, 0)) {
+			string = realloc(string, ++size);
+			string[size-1] = input[tokenizer->pos++];
+		} else {
+			string = realloc(string, ++size);
+			string[size-1] = input[tokenizer->pos++];
+			string = realloc(string, ++size);
+			string[size-1] = input[tokenizer->pos++];
 			break;
 		}
 	}
@@ -231,6 +257,18 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 				token->type = LESS;
 			}
 			break;
+		case '/':
+			if (starts_with(input, "//", tokenizer->pos)) {
+				free(token);
+				return read_single_line_comment(tokenizer);
+			} else if (starts_with(input, "/*", tokenizer->pos)) {
+				free(token);
+				return read_multi_line_comment(tokenizer);
+			} else {
+				tokenizer->pos++;
+				token->type = DIV;
+			}
+			break;
 		default:
 			token->type = UNIDENTIFIED;
 			break;
@@ -271,9 +309,6 @@ token_t* next_token(tokenizer_t* tokenizer) {
 		case '\"':
 			free(token);
 			return read_string(tokenizer);
-		case ';':
-			free(token);
-			return read_single_line_comment(tokenizer);
 
 		case '+':
 			token->type = ADD;
@@ -283,9 +318,6 @@ token_t* next_token(tokenizer_t* tokenizer) {
 			break;
 		case '*':
 			token->type = MUL;
-			break;
-		case '/':
-			token->type = DIV;
 			break;
 		case '%':
 			token->type = MOD;

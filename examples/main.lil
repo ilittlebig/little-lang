@@ -14,10 +14,19 @@ fn main() : void {
 	(defvar pong test_func)
 	(funcall pong "Ping!\n")
 	(print pong)
-	; (printi 12345)
+	// (printi 12345)
 	(= a 50)
 	(printi a)
 	(printi 123456789)
+
+	/*
+		this
+		is
+		a
+		multi
+		line
+		comment
+	*/
 
 	(defvar num ret_int_func)
 	(funcall num 666)
