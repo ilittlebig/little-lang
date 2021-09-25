@@ -32,11 +32,13 @@ void emit_number(ast_t* expr) {
 void emit_call(ast_t* expr) {
 	for (int i = vec_length(&expr->list) - 1; i >= 0; --i) {
 		ast_t* arg = vec_get(&expr->list, i);
-		if (arg->type == AST_IDENTIFIER) {
-			emit("	pushl %d(%%ebp)", arg->arg_offset);
+		if (arg->type == AST_INT) {
+			emit("	pushl $%s", arg->value);
 		} else if (arg->type == AST_STRING) {
 			emit_literal(arg);
 			emit("	pushl $%s", arg->label);
+		} else if (arg->type == AST_IDENTIFIER) {
+			emit("	pushl %d(%%ebp)", arg->arg_offset);
 		}
 	}
 	emit("	call %s", expr->name);

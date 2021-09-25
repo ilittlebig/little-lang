@@ -1,11 +1,26 @@
-fn test_func(string ping) : int {
+fn test_func(string ping) : string {
 	(print ping)
 	(= pong "Pong!\n")
 	(return pong)
+}
+
+fn ret_int_func(int juice) : int {
+	(= num1 123)
+	(printi juice)
+	(return num1)
 }
 
 fn main() : void {
 	(defvar pong test_func)
 	(funcall pong "Ping!\n")
 	(print pong)
+	; (printi 12345)
+	(= a 50)
+	(printi a)
+	(printi 123456789)
+
+	(defvar num ret_int_func)
+	(funcall num 666)
+	(print "The num is: ")
+	(printi num)
 }
