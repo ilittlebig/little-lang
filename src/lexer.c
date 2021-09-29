@@ -61,6 +61,8 @@ char* token_to_str(token_type_t token_type) {
 	switch (token_type) {
 		case FN: return "FN";
 		case RETURN: return "RETURN";
+		case DEFVAR: return "DEFVAR";
+		case FUNCALL: return "FUNCALL";
 		case INT: return "INT";
 		case FLOAT: return "FLOAT";
 		case STRING: return "STRING";
@@ -92,6 +94,7 @@ char* token_to_str(token_type_t token_type) {
 		case SEMICOLON: return "SEMICOLON";
 		case ATTR: return "ATTR";
 		case SINGLE_LINE_COMMENT: return "SINGLE_LINE_COMMENT";
+		case MULTI_LINE_COMMENT: return "MULTI_LINE_COMMENT";
 		case STRING_LITERAL: return "STRING_LITERAL";
 		case UNCLOSED_STRING_LITERAL: return "UNCLOSED_STRING_LITERAL";
 		case WHITESPACE: return "WHITESPACE";
@@ -382,7 +385,7 @@ vec_t tokenize(const char* input) {
 	tokenizer->pos = 0;
 
 	vec_t tokens;
-	vec_init(&tokens, 4);
+	vec_init(&tokens, 1);
 
 	while (!is_eof(tokenizer)) {
 		token_t* token = next_token(tokenizer);

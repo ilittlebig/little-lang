@@ -11,7 +11,7 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -g
 
 $(BIN_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
@@ -24,11 +24,6 @@ $(BIN_DIR)/%.c.o: %.c
 
 clean:
 	$(RM) -r $(BIN_DIR)
-
-run:
-	$(BIN_DIR)/parser examples/main.lil
-	as --32 $(BIN_DIR)/assembly.asm $(LIB_DIR)/stdlib.asm -o $(BIN_DIR)/a.o
-	ld -m elf_i386 $(BIN_DIR)/a.o -o $(BIN_DIR)/a
 
 -include $(DEPS)
 

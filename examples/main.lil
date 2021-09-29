@@ -1,35 +1,16 @@
-fn test_func(string ping) : string {
-	(print ping)
-	(= pong "Pong!\n")
-	(return pong)
+fn ttest() : string {
+	(print "Called\n")
+	(return "Hello World\n")
 }
 
-fn ret_int_func(int juice) : int {
-	(= num1 123)
-	(printi juice)
-	(return num1)
-}
-
-fn main() : void {
-	(defvar pong test_func)
-	(funcall pong "Ping!\n")
-	(print pong)
-	// (printi 12345)
+fn main(int argc) : void {
+	(defvar a ttest)
+	(funcall a)
+	(print a)
+	(printi 256)
 	(= a 50)
+	(= b "Hello\n")
 	(printi a)
-	(printi 123456789)
-
-	/*
-		this
-		is
-		a
-		multi
-		line
-		comment
-	*/
-
-	(defvar num ret_int_func)
-	(funcall num 666)
-	(print "The num is: ")
-	(printi num)
+	(print b)
+	(ttest)
 }

@@ -176,8 +176,13 @@ ast_t* parse_defvar(parser_t* parser) {
 	ast_t* defvar = init_ast(AST_DEFVAR);
 	advance_token_type(parser, DEFVAR);
 
-	defvar->name = parse_identifier(parser)->name;
-	defvar->value = parse_identifier(parser)->name;
+	ast_t* var = parse_identifier(parser);
+	defvar->name = var->name;
+	ast_t* func = parse_identifier(parser);
+	defvar->value = func->name;
+
+	free(var);
+	free(func);
 
 	advance_token_type(parser, RIGHT_PAREN);
 	return defvar;
@@ -187,16 +192,23 @@ ast_t* parse_funcall(parser_t* parser) {
 	ast_t* funcall = init_ast(AST_FUNCALL);
 	advance_token_type(parser, FUNCALL);
 
-	funcall->name = parse_identifier(parser)->name;
+	ast_t* identifier = parse_identifier(parser);
+	funcall->name = identifier->name;
 	push_args(parser, funcall);
 
-	ast_t* var = find_var(funcall->name);
-	if (var) {
-		funcall->value = var->value;
-		funcall->offset = var->offset;
+	ast_t* defvar = find_var(funcall->name);
+	free(funcall->name);
+
+	if (defvar) {
+		funcall->name = defvar->value;
+		funcall->value = defvar->value;
+		funcall->offset = defvar->offset;
+		funcall->defvar = defvar;
 	} else {
 		go_error_at(parser->location, "undefined reference to '%s'", funcall->name);
 	}
+
+	free(identifier);
 
 	advance_token_type(parser, RIGHT_PAREN);
 	return funcall;
@@ -249,9 +261,10 @@ ast_t* parse_compound(parser_t* parser) {
 		} else {
 			go_error_at(parser->location, "expected identifier after '=' token");
 		}
+		free(identifier);
 
 		ast_t* expr = parse_expr(parser);
-		if (expr != NULL) {
+		if (expr) {
 			if (expr->type == AST_IDENTIFIER) {
 				ast_t* var = find_var(expr->name);
 				if (var) {
@@ -303,7 +316,6 @@ ast_t* parse_expr(parser_t* parser) {
 		case FN:		     return parse_func(parser);
 		case IDENTIFIER:	 return parse_identifier(parser);
 		case STRING_LITERAL: return parse_string(parser);
-		case RETURN:		 return parse_return(parser); // USELESS?
 		case INT_NUMBER:	 return parse_int(parser);
 		case LEFT_PAREN:	 return parse_compound(parser);
 		case SINGLE_LINE_COMMENT:
@@ -319,47 +331,38 @@ ast_t* parse_expr(parser_t* parser) {
 	return NULL;
 }
 
-int main(int argc, char* argv[]) {
-	parser_t* parser = malloc(sizeof(struct parser_t));
+void parse_src(char* path, char* src) {
+	vec_t asts;
+	vec_init(&asts, 1);
+
 	location_t* location = malloc(sizeof(struct location_t));
-
-	char* file_path = argv[1];
-	char* file_buff = read_file(file_path);
-
-	parser->tokens = tokenize(file_buff);
-	parser->head = vec_get(&parser->tokens, 0);
-	parser->location = location;
-	parser->tokens_parsed = 0;
-
-	// TODO: change line on 'NEW_LINE' token
-	location->file_path = file_path;
+	location->path = path;
 	location->line = 1;
 
-	vec_t vec;
-	vec_init(&vec, 1);
+	parser_t* parser = malloc(sizeof(struct parser_t));
+	parser->tokens = tokenize(src);
+	parser->head = vec_get(&parser->tokens, 0);
+	parser->tokens_parsed = 0;
+	parser->location = location;
+
 	while (peek_token(parser)->type != END_OF_FILE) {
 		ast_t* expr = parse_expr(parser);
 		if (expr) {
-			vec_push_back(&vec, expr);
+			vec_push_back(&asts, expr);
 		}
 	}
-	advance_token_type(parser, END_OF_FILE);
 
-	gen(vec); // test func
-	// asm_init(vec);
+	advance_token_type(parser, END_OF_FILE);
+	gen_asm(asts);
 
 	for (int i = 0; i < vec_length(&parser->tokens); ++i) {
 		token_t* token = vec_get(&parser->tokens, i);
 		free(token);
 	}
 
-	// TODO: cleanup more allocated memory
+	vec_free(&asts);
 	vec_free(&parser->tokens);
-	vec_free(&vec);
 
 	free(parser);
 	free(location);
-	free(file_buff);
-
-	return 0;
 }

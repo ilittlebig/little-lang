@@ -43,3 +43,16 @@ char* read_file(const char* filename) {
 
 	return buff;
 }
+
+void write_command(const char* command) {
+	FILE* file;
+
+	file = popen(command, "r");
+	if (!file) {
+		printf("Failed to run command '%s'\n", command);
+		return;
+	}
+
+	fprintf(file, command);
+	fclose(file);
+}

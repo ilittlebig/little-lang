@@ -5,7 +5,8 @@
 
 typedef struct location_t {
 	int line;
-	char* file_path;
+	char* src;
+	char* path;
 } location_t;
 
 typedef struct parser_t {
@@ -34,5 +35,6 @@ ast_t* parse_string(parser_t* parser);
 ast_t* parse_int(parser_t* parser);
 ast_t* parse_compound(parser_t* parser);
 ast_t* parse_expr(parser_t* parser);
+void parse_src(char* path, char* src);
 
 #endif /* PARSER_H */

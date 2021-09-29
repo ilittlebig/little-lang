@@ -28,6 +28,7 @@ typedef struct ast_t {
 	void* next;
 	void* vars;
 	void* params;
+	void* defvar;
 
 	vec_t list;
 	ast_type_t type;
