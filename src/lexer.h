@@ -12,6 +12,8 @@
 typedef enum token_type_t {
 	// Reserved Keywords
 	FN,
+	IF,
+	ELSE,
 	INT,
 	FLOAT,
 	STRING,
@@ -65,7 +67,7 @@ typedef enum token_type_t {
 
 typedef struct token_t {
 	token_type_t type;
-	void* value;
+	char* value;
 } token_t;
 
 typedef struct tokenizer_t {

@@ -1,0 +1,16 @@
+fn main() : void {
+	(print "Hello World\n")
+	(print "\tHello\n")
+	(print "\n")
+	(print "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n")
+
+	(printi 0)
+	(printi 1)
+	(printi 123)
+	(printi 123456)
+	(printi 123456789)
+
+	(defvar a strlen)
+	(funcall a "Hello World\n")
+	(printi a)
+}

@@ -13,8 +13,13 @@ static void emit(char* fmt, ...) {
 	fprintf(outputfp, "\n");
 }
 
-static char* make_label() {
+static int count() {
 	static int c = 0;
+	return c++;
+}
+
+static char* make_label() {
+	int c = count();
 	char* buff = calloc(4, sizeof(char));
 	sprintf(buff, "LC%d", c++);
 	return buff;
@@ -43,17 +48,12 @@ void emit_call(ast_t* expr) {
 		ast_t* arg = vec_get(&expr->list, i);
 		if (arg->type == AST_INT) {
 			emit("	pushl $%s", arg->value);
-			free(arg->value);
 		} else if (arg->type == AST_STRING) {
 			emit_literal(arg);
 			emit("	pushl $%s", arg->label);
-			free(arg->value);
-			free(arg->label);
 		} else if (arg->type == AST_IDENTIFIER) {
 			emit("	pushl %d(%%ebp)", arg->arg_offset);
-			free(arg->name);
 		}
-		free(arg);
 	}
 	emit("	call %s", expr->name);
 	emit("	add $%d, %%esp", vec_length(&expr->list)*4);
@@ -61,29 +61,75 @@ void emit_call(ast_t* expr) {
 	if (expr->type == AST_FUNCALL) {
 		emit("	movl %%eax, %d(%%ebp)", expr->offset);
 	}
-
-	free(expr->name);
-	free(expr);
-	vec_free(&expr->list);
 }
 
 void emit_return(ast_t* expr) {
 	ast_t* ret = expr->value;
 	if (ret->type == AST_INT) {
 		emit("	movl $%s, %%eax", ret->value);
-		free(ret->value);
 	} else if (ret->type == AST_STRING) {
 		emit_literal(ret);
 		emit("	movl $%s, %%eax", ret->label);
-		free(ret->value);
-		free(ret->label);
 	} else if (ret->type == AST_IDENTIFIER) {
 		emit("	movl %d(%%ebp), %%eax", ret->offset);
-		free(ret->name);
+	}
+}
+
+// TODO: Can't compare strings where one of them is stored
+// in a variable, and the other one is declared in the condition.
+// For it to work it's needs to grab the same label as the one
+// it's comparing itself to instead of creating a new one.
+// TODO: Make this more general instead of trying to handle
+// every possible case inside of this function.
+void emit_if(ast_t* stmt) {
+	ast_t* cond = stmt->cond;
+	ast_t* lhs = cond->lhs;
+	ast_t* rhs = cond->rhs;
+
+	if (lhs->type_specifier == IDENTIFIER && rhs->type_specifier == INT_NUMBER) {
+		emit("	cmpl $%s, %d(%%ebp)", rhs->value, lhs->offset);
+	} else if (lhs->type_specifier == IDENTIFIER && rhs->type_specifier == IDENTIFIER){
+		emit("	movl %d(%%ebp), %%eax", rhs->offset);
+		emit("	cmpl %d(%%ebp), %%eax", lhs->offset);
+	} else if (lhs->type_specifier != INT_NUMBER && rhs->type_specifier == IDENTIFIER) {
+		emit("	cmpl $%s, %d(%%ebp)", lhs->value, rhs->offset);
+	} else if (lhs->type_specifier == STRING_LITERAL && rhs->type_specifier == IDENTIFIER) {
+		emit_literal(lhs);
+		emit("	cmpl $%s, %d(%%ebp)", lhs->label, rhs->offset);
+	} else if (lhs->type_specifier == IDENTIFIER && rhs->type_specifier == STRING_LITERAL) {
+		emit_literal(rhs);
+		emit("	cmpl $%s, %d(%%ebp)", rhs->label, lhs->offset);
+	} else if (lhs->type_specifier == INT_NUMBER && rhs->type_specifier == INT_NUMBER) {
+		if (strcmp(lhs->value, rhs->value) == 0) {
+			emit_stmt(stmt->body);
+		} else {
+			if (stmt->els) {
+				emit_stmt(stmt->els);
+			}
+		}
+		return;
+	} else if (lhs->type_specifier == STRING_LITERAL && rhs->type_specifier == STRING_LITERAL) {
+		if (strcmp(lhs->value, rhs->value) == 0) {
+			emit_stmt(stmt->body);
+		} else {
+			if (stmt->els) {
+				emit_stmt(stmt->els);
+			}
+		}
+		return;
 	}
 
-	free(ret);
-	free(expr);
+	int c1 = count();
+	int c2 = count();
+
+	emit("	jne .L%d", c1);
+	emit_stmt(stmt->body);
+	emit("	jne .L%d", c2);
+	if (stmt->els) {
+		emit(".L%d:", c1);
+		emit_stmt(stmt->els);
+	}
+	emit(".L%d:", c2);
 }
 
 void emit_defvar(ast_t* expr) {
@@ -94,33 +140,19 @@ void emit_defvar(ast_t* expr) {
 void emit_funcall(ast_t* expr) {
 	expr->name = expr->value;
 	emit_call(expr);
-
-	ast_t* defvar = expr->defvar;
-	if (defvar) {
-		free(defvar->name);
-		free(defvar);
-	}
 }
 
 void emit_assignment(ast_t* expr) {
 	ast_t* expr_value = expr->value;
 	if (expr_value->type == AST_INT) {
 		emit("	movl $%s, %d(%%ebp)", expr_value->value, expr->offset);
-		free(expr_value->value);
 	} else if (expr_value->type == AST_STRING) {
 		emit_literal(expr_value);
 		emit("	movl $%s, %d(%%ebp)", expr_value->label, expr->offset);
-		free(expr_value->value);
-		free(expr_value->label);
 	} else if (expr_value->type == AST_IDENTIFIER) {
 		emit("	movl %d(%%ebp), %%eax", expr_value->offset);
 		emit("	movl %%eax, %d(%%ebp)", expr->offset);
-		free(expr_value->name);
 	}
-
-	free(expr_value);
-	free(expr->name);
-	free(expr);
 }
 
 void emit_body(ast_t* body) {
@@ -133,6 +165,7 @@ void emit_body(ast_t* body) {
 void emit_stmt(ast_t* stmt) {
 	switch(stmt->type) {
 		case AST_BLOCK: emit_body(stmt); return;
+		case AST_IF:	emit_if(stmt);	 return;
 		default:
 			return;
 	}
@@ -149,7 +182,7 @@ void emit_expr(ast_t* expr) {
 		case AST_FUNCALL:	 emit_funcall(expr);	return;
 		case AST_ASSIGNMENT: emit_assignment(expr);	return;
 		default:
-			return;
+			emit_stmt(expr);
 	}
 }
 
@@ -189,6 +222,9 @@ void gen_asm(vec_t asts) {
 		emit("	leave");
 		emit("	ret");
 
+		// TODO: There's currently a lot of allocated memory
+		// that hasn't been freed yet. Try to free that memory
+		// here or in a dedicated cleanup function.
 		for (ast_t* var = func->params; var; var = var->next) {
 			free(var->name);
 			free(var);

@@ -19,12 +19,12 @@ void advance_token(parser_t* parser) {
 }
 
 void advance_token_type(parser_t* parser, token_type_t token_type) {
-	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
+	token_t* token = peek_token(parser);
 	if (token && token->type == token_type) {
 		parser->tokens_parsed++;
 	} else {
 		advance_token(parser);
-		go_error_at(parser->location, "token '%s' was expecting '%s'", token->type, token_type);
+		go_error_at(parser->location, "token '%s' was expecting '%s'", token_to_str(token->type), token_to_str(token_type));
 	}
 }
 
@@ -214,6 +214,65 @@ ast_t* parse_funcall(parser_t* parser) {
 	return funcall;
 }
 
+ast_t* parse_stmt(parser_t* parser) {
+	token_t* token = peek_token(parser);
+
+	if (token->type == IF) {
+		ast_t* ast = init_ast(AST_IF);
+		advance_token_type(parser, IF);
+		advance_token_type(parser, LEFT_PAREN);
+		ast->cond = parse_cond(parser);
+		advance_token_type(parser, RIGHT_PAREN);
+		ast->body = parse_body(parser);
+
+		token_t* token = peek_token(parser);
+		if (token->type == ELSE) {
+			advance_token_type(parser, ELSE);
+			ast->els = parse_body(parser);
+		}
+		return ast;
+	}
+
+	return NULL;
+}
+
+static void set_cond(parser_t* parser, ast_t* lhs) {
+	token_t* token = peek_token(parser);
+	if (token->type == IDENTIFIER) {
+		ast_t* var = find_var(token->value);
+		if (var) {
+			ast_t* val = var->value;
+			lhs->offset = var->offset;
+			lhs->value = val->value;
+		} else {
+			go_error_at(parser->location, "undefined reference to '%s'", token->value);
+		}
+		lhs->value = token->value;
+	} else {
+		lhs->value = token->value;
+	}
+	lhs->type_specifier = token->type;
+}
+
+ast_t* parse_cond(parser_t* parser) {
+	ast_t* cond = init_ast(AST_COND);
+
+	ast_t* lhs = init_ast(AST_COND);
+	set_cond(parser, lhs);
+	advance_token(parser);
+
+	if (peek_token(parser)->type == EQUAL) {
+		advance_token(parser);
+		ast_t* rhs = init_ast(AST_COND);
+		set_cond(parser, rhs);
+		advance_token(parser);
+		cond->lhs = lhs;
+		cond->rhs = rhs;
+	}
+
+	return cond;
+}
+
 ast_t* parse_identifier(parser_t* parser) {
 	token_t* token = peek_token(parser);
 
@@ -314,6 +373,7 @@ ast_t* parse_expr(parser_t* parser) {
 
 	switch(token->type) {
 		case FN:		     return parse_func(parser);
+		case IF:		     return parse_stmt(parser);
 		case IDENTIFIER:	 return parse_identifier(parser);
 		case STRING_LITERAL: return parse_string(parser);
 		case INT_NUMBER:	 return parse_int(parser);

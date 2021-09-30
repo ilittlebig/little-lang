@@ -14,6 +14,8 @@ typedef enum ast_type_t {
 	AST_FUNCALL,
 	AST_ASSIGNMENT,
 	AST_FUNCTION,
+	AST_IF,
+	AST_COND,
 	AST_BLOCK
 } ast_type_t;
 
@@ -29,6 +31,12 @@ typedef struct ast_t {
 	void* vars;
 	void* params;
 	void* defvar;
+
+	void* cond;
+	void* els;
+
+	void* lhs;
+	void* rhs;
 
 	vec_t list;
 	ast_type_t type;

@@ -30,6 +30,8 @@ ast_t* parse_body(parser_t* parser);
 void push_args(parser_t* parser, ast_t* compound);
 ast_t* parse_return(parser_t* parser);
 ast_t* parse_defvar(parser_t* parser);
+ast_t* parse_stmt(parser_t* parser);
+ast_t* parse_cond(parser_t* parser);
 ast_t* parse_identifier(parser_t* parser);
 ast_t* parse_string(parser_t* parser);
 ast_t* parse_int(parser_t* parser);

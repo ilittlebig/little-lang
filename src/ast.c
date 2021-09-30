@@ -12,6 +12,8 @@ char* ast_type_to_str(ast_type_t ast_type) {
 		case AST_FUNCALL:	 return "AST_FUNCALL";
 		case AST_ASSIGNMENT: return "AST_ASSIGNMENT";
 		case AST_FUNCTION:	 return "AST_FUNCTION";
+		case AST_IF:		 return "AST_IF";
+		case AST_COND:		 return "AST_COND";
 		case AST_BLOCK:		 return "AST_BLOCK";
 	}
 }

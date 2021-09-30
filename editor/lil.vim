@@ -6,14 +6,14 @@
 " Add this file to
 "	~/.vim/syntax
 " Add this command to your .vimrc file
-"	au BufRead,BufNewFile *.lil setfiletype lil
+"	autocmd BufRead,BufNewFile *.lil setfiletype lil
 
 if exists("b:current_syntax")
 	finish
 endif
 
 " Keywords
-syn keyword littleLangKeywords return fn int void string defvar funcall float
+syn keyword littleLangKeywords return if else fn int void string defvar funcall float
 
 " Comments
 syn match littleComment oneline "//.*$"
