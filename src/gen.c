@@ -26,6 +26,10 @@ static void push_args2(node_t* node) {
 			}
 			emit("	pushl %d(%%ebp)", node->var->offset);
 			break;
+		default:
+			emit_expr(node);
+			emit("	push %%ax");
+			break;
 	}
 
 	push_args2(node->next);
@@ -46,21 +50,21 @@ static void emit_stmt(node_t* node) {
 			for (node_t* n = node->body; n; n = n->next) {
 				emit_stmt(n);
 			}
-			return;
+			break;
 		case ND_EXPR:
 			emit_expr(node->lhs);
-			return;
+			break;
 		case ND_DEFVAR:
 			int args = push_args(node->rhs);
 			emit("	call %s", node->rhs->lhs->var->name);
 			args > 0 ? emit("	add $%d, %%esp", args * 4) : NULL;
 			emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
-			return;
+			break;
 		case ND_CALL:
 			args = push_args(node);
 			emit("	call %s", node->lhs->var->name);
 			args > 0 ? emit("	add $%d, %%esp", args * 4) : NULL;
-			return;
+			break;
 		case ND_RETURN:
 			switch(node->lhs->kind) {
 				case ND_NUM:
@@ -72,6 +76,9 @@ static void emit_stmt(node_t* node) {
 						break;
 					}
 					emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+					break;
+				default:
+					emit_expr(node->lhs);
 					break;
 			}
 			return;
@@ -86,20 +93,54 @@ static void emit_expr(node_t* node) {
 			switch(node->rhs->kind) {
 				case ND_NUM:
 					emit("	movl $%s, %d(%%ebp)", node->rhs->val, node->lhs->var->offset);
-					return;
+					break;
 				case ND_VAR:
 					if (node->rhs->var->init_data) {
 						emit("	movl $%s, %d(%%ebp)", node->rhs->var->name, node->lhs->var->offset);
-						return;
+						break;
 					}
 					emit("	movl %d(%%ebp), %%eax", node->rhs->var->offset);
 					emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
-					return;
+					break;
+				default:
+					emit_expr(node->rhs);
+					break;
 			}
+
+			switch(node->rhs->kind) {
+				case ND_EQUAL:
+					emit("	mov %%al, %d(%%ebp)", node->lhs->var->offset);
+					break;
+			}
+
 			return;
 		case ND_STMT:
 			for (node_t* n = node->body; n; n = n->next) {
 				emit_stmt(n);
+			}
+			return;
+		case ND_EQUAL:
+			switch(node->lhs->kind) {
+				case ND_NUM:
+					emit("	movl $%s, %%eax", node->lhs->val);
+					break;
+				case ND_VAR:
+					emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+					break;
+			}
+
+			switch(node->rhs->kind) {
+				case ND_NUM:
+					emit("	movl $%s, %%edi", node->rhs->val);
+					break;
+				case ND_VAR:
+					emit("	movl %d(%%ebp), %%edi", node->rhs->var->offset);
+					break;
+			}
+			emit("	cmpl %%eax, %%edi");
+
+			if (node->kind == ND_EQUAL) {
+				emit("	sete %%al");
 			}
 			return;
 		case ND_COND:
