@@ -1,10 +1,12 @@
-/*
 #include <stdarg.h>
+#include <stdio.h>
+
 #include "error.h"
 
-void go_error_at(location_t* location, char* message, ...) {
+int has_error = 0;
+void error_at(char* message, ...) {
 	printf("\033[1;37m");
-	printf("%s:%i: ", location->path, location->line);
+	printf("examples/main.lil:1: ");
 	printf("\033[0m");
 
 	va_list args;
@@ -14,7 +16,8 @@ void go_error_at(location_t* location, char* message, ...) {
 	printf("\033[0m");
 	vprintf(message, args);
 	va_end(args);
-	printf("\n");
+
+	has_error = 1;
 }
 
 void fatal_error(char* message, ...) {
@@ -29,12 +32,15 @@ void fatal_error(char* message, ...) {
 	printf("\033[0m");
 	vprintf(message, args);
 	va_end(args);
+
 	printf("\n");
+
+	has_error = 1;
 }
 
-void go_warning_at(location_t* location, char* message, ...) {
+void warning_at(char* message, ...) {
 	printf("\033[1;37m");
-	printf("%s:%i: ", location->src, location->line);
+	printf("examples/main.lil:1: ");
 	printf("\033[0m");
 
 	va_list args;
@@ -44,6 +50,4 @@ void go_warning_at(location_t* location, char* message, ...) {
 	printf("\033[0m");
 	vprintf(message, args);
 	va_end(args);
-	printf("\n");
 }
-*/

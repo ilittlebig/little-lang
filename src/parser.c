@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "error.h"
 #include "file.h"
 
 static token_t* peek(parser_t* parser) {
@@ -24,8 +25,7 @@ static void consume_type(parser_t* parser, token_type_t token_type) {
 		parser->tokens_parsed++;
 	} else {
 		consume(parser);
-		//go_error_at(parser->location, "token '%s' was expecting '%s'", token_to_str(token->type), token_to_str(token_type));
-		printf("token '%s' was expecting '%s'\n", token_to_str(token->type), token_to_str(token_type));
+		error_at("token '%s' was expecting '%s'\n", token_to_str(token->type), token_to_str(token_type));
 	}
 }
 
@@ -167,7 +167,7 @@ static node_t* stmt(parser_t* parser) {
 		return node;
 	}
 
-	printf("expected statement\n");
+	error_at("expected statement\n");
 	return NULL;
 }
 
@@ -202,7 +202,8 @@ static node_t* read_var(parser_t* parser) {
 		return node;
 	}
 
-	printf("unidentifed variable\n");
+	error_at("'%s' undeclared (first use in this function)\n", token->value);
+	return NULL;
 }
 
 static node_t* read_number(parser_t* parser) {
@@ -234,7 +235,7 @@ static node_t* expr(parser_t* parser) {
 		case NUMBER:		 return read_number(parser);
 		case STRING_LITERAL: return read_string(parser);
 		default:
-			printf("unknown token type: '%s'\n", token_to_str(token->type));
+			error_at("unknown token type: '%s'\n", token_to_str(token->type));
 	}
 }
 

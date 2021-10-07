@@ -1,12 +1,10 @@
-/*
 #ifndef ERROR_H
 #define ERROR_H
 
-#include "parser.h"
+extern int has_error;
 
-void go_error_at(location_t* location, char* message, ...);
+void error_at(char* message, ...);
 void fatal_error(char* message, ...);
-void go_warning_at(location_t* location, char* message, ...);
+void warning_at(char* message, ...);
 
-#endif
-*/
+#endif /* ERROR_H */
