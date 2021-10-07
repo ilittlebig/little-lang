@@ -51,9 +51,9 @@ struct node_t {
 	node_t* lhs;
 	node_t* rhs;
 
-	node_t* cond; // not using yet.
-	node_t* then; // not using yet.
-	node_t* els; // not using yet.
+	node_t* cond;
+	node_t* then;
+	node_t* els;
 
 	node_t* body;
 

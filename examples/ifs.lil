@@ -1,0 +1,36 @@
+fn main() : void {
+	if (== 0 0) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (== 0 1) { /* will print false */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	int : (= a (== 0 0))
+	if (== a 1) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	int : (= a 0)
+	int : (= b 0)
+	if (== a b) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	int : (= a 0)
+	int : (= b 1)
+	if (== a b) { /* will print false */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+}

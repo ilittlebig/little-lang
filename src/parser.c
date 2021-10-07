@@ -120,10 +120,10 @@ static node_t* declaration(parser_t* parser) {
 }
 
 static node_t* stmt(parser_t* parser) {
-	consume_type(parser, LEFT_PAREN);
+	if (peek2(parser)->type == RETURN) {
+		token_t* token = peek2(parser);
+		consume_type(parser, LEFT_PAREN);
 
-	token_t* token = peek(parser);
-	if (token->type == RETURN) {
 		node_t* node = new_node(ND_RETURN, token);
 		consume_type(parser, RETURN);
 
@@ -133,7 +133,24 @@ static node_t* stmt(parser_t* parser) {
 		return node;
 	}
 
-	if (token->type == DEFVAR) {
+	if (peek(parser)->type == IF) {
+		token_t* token = peek(parser);
+		node_t* node = new_node(ND_IF, token);
+		consume_type(parser, IF);
+
+		node->cond = assign(parser);
+		node->then = compound_stmt(parser);
+		if (peek(parser)->type == ELSE) {
+			consume_type(parser, ELSE);
+			node->els = compound_stmt(parser);
+		}
+
+		return node;
+	}
+
+	if (peek2(parser)->type == DEFVAR) {
+		token_t* token = peek2(parser);
+		consume_type(parser, LEFT_PAREN);
 		node_t* node = new_node(ND_DEFVAR, token);
 		consume_type(parser, DEFVAR);
 
@@ -151,7 +168,9 @@ static node_t* stmt(parser_t* parser) {
 		return node;
 	}
 
-	if (token->type == IDENTIFIER) {
+	if (peek2(parser)->type == IDENTIFIER) {
+		token_t* token = peek2(parser);
+		consume_type(parser, LEFT_PAREN);
 		node_t head = {};
 		node_t* cur = &head;
 

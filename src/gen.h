@@ -6,6 +6,7 @@
 
 static FILE* outputfp;
 
+static int count();
 static void emit(char* fmt, ...);
 static void push_args2(node_t* node);
 static int push_args(node_t* node);

@@ -2,6 +2,11 @@
 
 #include "gen.h"
 
+static int count() {
+	static int c = 0;
+	return c++;
+}
+
 static void emit(char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
@@ -81,7 +86,21 @@ static void emit_stmt(node_t* node) {
 					emit_expr(node->lhs);
 					break;
 			}
-			return;
+		case ND_IF:
+			int c1 = count();
+			int c2 = count();
+
+			emit_expr(node->cond);
+			emit("	jne .L%d", c1);
+			emit_stmt(node->then);
+			emit("	jne .L%d", c2);
+
+			if (node->els) {
+				emit(".L%d:", c1);
+				emit_stmt(node->els);
+			}
+			emit(".L%d:", c2);
+			break;
 	}
 }
 
