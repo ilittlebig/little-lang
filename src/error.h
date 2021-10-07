@@ -1,3 +1,4 @@
+/*
 #ifndef ERROR_H
 #define ERROR_H
 
@@ -7,4 +8,5 @@ void go_error_at(location_t* location, char* message, ...);
 void fatal_error(char* message, ...);
 void go_warning_at(location_t* location, char* message, ...);
 
-#endif /* ERROR_H */
+#endif
+*/

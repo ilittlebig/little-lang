@@ -10,7 +10,6 @@ fn main() : void {
 	(printi 123456)
 	(printi 123456789)
 
-	(defvar a strlen)
-	(funcall a "Hello World\n")
-	(printi a)
+	(defvar len (strlen "Hello World\n"))
+	(printi len)
 }

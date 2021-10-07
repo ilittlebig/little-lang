@@ -13,7 +13,7 @@ if exists("b:current_syntax")
 endif
 
 " Keywords
-syn keyword littleLangKeywords return if else fn int void string defvar funcall float
+syn keyword littleLangKeywords return if else fn int void string defvar float
 
 " Comments
 syn match littleComment oneline "//.*$"

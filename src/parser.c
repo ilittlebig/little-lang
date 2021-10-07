@@ -1,428 +1,352 @@
 #include "parser.h"
-#include "error.h"
 #include "file.h"
-#include "gen.h"
 
-token_t* peek_token(parser_t* parser) {
+static token_t* peek(parser_t* parser) {
 	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
-	if (token != NULL) {
-		parser->head = token;
-		return parser->head;
-	}
+	parser->head = token;
+	return parser->head;
 }
 
-void advance_token(parser_t* parser) {
-	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
-	if (token) {
-		parser->tokens_parsed++;
-	}
+static token_t* peek2(parser_t* parser) {
+	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed + 1);
+	parser->head = token;
+	return parser->head;
 }
 
-void advance_token_type(parser_t* parser, token_type_t token_type) {
-	token_t* token = peek_token(parser);
+static void consume(parser_t* parser) {
+	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
+	parser->tokens_parsed++;
+}
+
+static void consume_type(parser_t* parser, token_type_t token_type) {
+	token_t* token = peek(parser);
 	if (token && token->type == token_type) {
 		parser->tokens_parsed++;
 	} else {
-		advance_token(parser);
-		go_error_at(parser->location, "token '%s' was expecting '%s'", token_to_str(token->type), token_to_str(token_type));
+		consume(parser);
+		//go_error_at(parser->location, "token '%s' was expecting '%s'", token_to_str(token->type), token_to_str(token_type));
+		printf("token '%s' was expecting '%s'\n", token_to_str(token->type), token_to_str(token_type));
 	}
 }
 
-ast_t* find_var(const char* varname) {
-	if (!current_func) { return NULL; }
-	// TODO: fix better solution for params
-	for (ast_t* var = current_func->params; var; var = var->next) {
-		if (strcmp(var->name, varname) == 0) {
+static int is_typename(token_t* token) {
+	token_type_t types[] = {INT, FLOAT, STRING, VOID};
+	int len = sizeof(types) / sizeof(*types);
+	for (int i = 0; i < len; ++i) {
+		if (types[i] == token->type) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static char* make_label() {
+	static int c = 0;
+	char* buff = calloc(4, sizeof(char));
+	sprintf(buff, "LC%d", c++);
+	return buff;
+}
+
+static obj_t* find_var(char* name) {
+	for (obj_t* var = globals; var; var = var->next) {
+		if (strcmp(var->name, name) == 0) {
 			return var;
 		}
 	}
-	for (ast_t* var = current_func->vars; var; var = var->next) {
-		if (strcmp(var->name, varname) == 0) {
+	for (obj_t* var = locals; var; var = var->next) {
+		if (strcmp(var->name, name) == 0) {
 			return var;
 		}
 	}
 	return NULL;
 }
 
-ast_t* parse_func(parser_t* parser) {
-	advance_token_type(parser, FN);
+static obj_t* new_var(char* name, token_type_t type) {
+	obj_t* var = calloc(1, sizeof(obj_t));
+	var->name = name;
+	var->type = type;
+	return var;
+}
 
-	ast_t* identifier = parse_identifier(parser);
+static obj_t* new_lvar(char* name, token_type_t type) {
+	obj_t* var = new_var(name, type);
+	var->next = locals;
+	locals = var;
+	return var;
+}
 
-	ast_t* func = init_ast(AST_FUNCTION);
-	func->name = identifier->name;
+static obj_t* new_gvar(char* name, token_type_t type) {
+	obj_t* var = new_var(name, type);
+	var->next = globals;
+	var->is_definition = true;
+	globals = var;
+	return var;
+}
+
+static node_t* new_node(node_kind_t kind, token_t* token) {
+	node_t* node = calloc(1, sizeof(node_t));
+	node->kind = kind;
+	node->token = token;
+	return node;
+}
+
+static node_t* new_binary(node_kind_t kind, node_t* lhs, node_t* rhs, token_t* token) {
+	node_t* node = new_node(kind, token);
+	node->lhs = lhs;
+	node->rhs = rhs;
+	return node;
+}
+
+static node_t* new_unary(node_kind_t kind, node_t* expr, token_t* token) {
+	node_t* node = new_node(kind, token);
+	node->lhs = expr;
+	return node;
+}
+
+static node_t* declaration(parser_t* parser) {
+	node_t head = {};
+	node_t* cur = &head;
+
+	token_type_t type = peek(parser)->type;
+	consume_type(parser, type);
+	consume_type(parser, COLON);
+
+	node_t* expr = assign(parser);
+	cur = cur->next = new_unary(ND_EXPR, expr, peek(parser));
+
+	node_t* node = new_node(ND_BLOCK, peek(parser));
+	node->body = head.next;
+	return node;
+}
+
+static node_t* stmt(parser_t* parser) {
+	consume_type(parser, LEFT_PAREN);
+
+	token_t* token = peek(parser);
+	if (token->type == RETURN) {
+		node_t* node = new_node(ND_RETURN, token);
+		consume_type(parser, RETURN);
+
+		node->lhs = assign(parser);
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	}
+
+	if (token->type == DEFVAR) {
+		node_t* node = new_node(ND_DEFVAR, token);
+		consume_type(parser, DEFVAR);
+
+		token = peek(parser);
+		consume_type(parser, IDENTIFIER);
+
+		obj_t* var = new_lvar(token->value, token->type);
+		node_t* lhs = new_node(ND_VAR, token);
+		lhs->var = var;
+
+		node->lhs = lhs;
+		node->rhs = stmt(parser);
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	}
+
+	if (token->type == IDENTIFIER) {
+		node_t head = {};
+		node_t* cur = &head;
+
+		node_t* fn = expr(parser);
+		while (peek(parser)->type != RIGHT_PAREN) {
+			node_t* arg = assign(parser);
+			cur = cur->next = arg;
+		}
+		consume_type(parser, RIGHT_PAREN);
+
+		node_t* node = new_unary(ND_CALL, fn, token);
+		node->args = head.next;
+		return node;
+	}
+
+	printf("expected statement\n");
+	return NULL;
+}
+
+static node_t* compound_stmt(parser_t* parser) {
+	node_t* node = new_node(ND_BLOCK, peek(parser));
+	node_t head = {};
+	node_t* cur = &head;
+
+	consume_type(parser, LEFT_CURLY);
+	while (peek(parser)->type != RIGHT_CURLY) {
+		token_t* token = peek(parser);
+		if (is_typename(token)) {
+			cur = cur->next = declaration(parser);
+		} else {
+			cur = cur->next = stmt(parser);
+		}
+	}
+	consume_type(parser, RIGHT_CURLY);
+
+	node->body = head.next;
+	return node;
+}
+
+static node_t* read_var(parser_t* parser) {
+	token_t* token = peek(parser);
+	consume_type(parser, IDENTIFIER);
+
+	obj_t* var = find_var(token->value);
+	if (var) {
+		node_t* node = new_node(ND_VAR, token);
+		node->var = var;
+		return node;
+	}
+
+	printf("unidentifed variable\n");
+}
+
+static node_t* read_number(parser_t* parser) {
+	token_t* token = peek(parser);
+
+	node_t* node = new_node(ND_NUM, token);
+	node->val = token->value;
+
+	consume_type(parser, NUMBER);
+	return node;
+}
+
+static node_t* read_string(parser_t* parser) {
+	token_t* token = peek(parser);
+	consume_type(parser, STRING_LITERAL);
+
+	obj_t* string_literal = new_gvar(make_label(), token->type);
+	string_literal->init_data = token->value;
+
+	node_t* var = new_node(ND_VAR, token);
+	var->var = string_literal;
+	return var;
+}
+
+static node_t* expr(parser_t* parser) {
+	token_t* token = peek(parser);
+	switch(token->type) {
+		case IDENTIFIER:	 return read_var(parser);
+		case NUMBER:		 return read_number(parser);
+		case STRING_LITERAL: return read_string(parser);
+		default:
+			printf("unknown token type: '%s'\n", token_to_str(token->type));
+	}
+}
+
+static node_t* equality(parser_t* parser) {
+	node_t* node;
+
+	if (peek2(parser)->type == EQUAL) {
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, EQUAL);
+
+		node = equality(parser);
+		node = new_binary(ND_EQUAL, node, expr(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	}
+
+	node = expr(parser);
+	return node;
+}
+
+static node_t* assign(parser_t* parser) {
+	token_t* token = peek2(parser);
+
+	switch(token->type) {
+		case ASSIGN:
+			consume_type(parser, LEFT_PAREN);
+			consume_type(parser, ASSIGN);
+
+			token_t* token = peek(parser);
+			consume_type(parser, IDENTIFIER);
+
+			obj_t* var = new_lvar(token->value, token->type);
+			node_t* lhs = new_node(ND_VAR, token);
+			lhs->var = var;
+
+			node_t* rhs = assign(parser);
+			node_t* node = new_binary(ND_ASSIGN, lhs, rhs, token);
+
+			consume_type(parser, RIGHT_PAREN);
+			return node;
+	}
+
+	node_t* node = equality(parser);
+	return node;
+}
+
+static void func_params(parser_t* parser) {
+	consume_type(parser, LEFT_PAREN);
+	while (peek(parser)->type != RIGHT_PAREN) {
+		token_type_t type = peek(parser)->type;
+		consume_type(parser, type);
+
+		char* name = peek(parser)->value;
+		consume_type(parser, IDENTIFIER);
+
+		new_lvar(name, type);
+		if (peek(parser)->type != RIGHT_PAREN) {
+			consume_type(parser, COMMA);
+		}
+	}
+	consume_type(parser, RIGHT_PAREN);
+}
+
+static obj_t* function(parser_t* parser) {
+	consume_type(parser, FN);
+	char* name = peek(parser)->value;
+	consume(parser);
+
+	locals = NULL;
+	func_params(parser);
+
+	consume_type(parser, COLON);
+	token_type_t type = peek(parser)->type;
+	consume(parser);
+
+	obj_t* func = new_gvar(name, type);
 	current_func = func;
 
-	locals = NULL;
-	parse_params(parser);
+	func->is_function = true;
 	func->params = locals;
+	func->body = compound_stmt(parser);
+	func->locals = locals;
 
-	advance_token_type(parser, COLON);
-	func->type_specifier = peek_token(parser)->type;
-	advance_token_type(parser, func->type_specifier);
-
-	locals = NULL;
-	func->body = parse_body(parser);
-	func->vars = locals;
-
-	free(identifier);
 	return func;
 }
 
-void parse_params(parser_t* parser) {
-	advance_token_type(parser, LEFT_PAREN);
-
-	int offset = 8;
-	while (peek_token(parser)->type != RIGHT_PAREN) {
-		ast_t* param = init_ast(AST_IDENTIFIER);
-		param->next = locals;
-		param->offset = offset;
-		locals = param;
-		offset += 4;
-
-		param->type_specifier = peek_token(parser)->type;
-		advance_token(parser);
-
-		param->name = peek_token(parser)->value;
-		advance_token(parser);
-
-		if (peek_token(parser)->type != RIGHT_PAREN) {
-			advance_token_type(parser, COMMA);
-		}
-	}
-	advance_token_type(parser, RIGHT_PAREN);
+static void declare_builtin_functions() {
+	obj_t* printfn = new_gvar("print", VOID);
+	printfn->is_definition = false;
+	obj_t* printifn = new_gvar("printi", VOID);
+	printifn->is_definition = false;
+	obj_t* strlenfn = new_gvar("strlen", INT);
+	strlenfn->is_definition = false;
 }
 
-ast_t* parse_body(parser_t* parser) {
-	ast_t* body = init_ast(AST_BLOCK);
-	vec_init(&body->list, 1);
-
-	advance_token_type(parser, LEFT_CURLY);
-
-	int offset = -4;
-	while (peek_token(parser)->type != END_OF_FILE && peek_token(parser)->type != RIGHT_CURLY) {
-		ast_t* expr = parse_expr(parser);
-		if (!expr) { continue; }
-		if (expr->type == AST_ASSIGNMENT || expr->type == AST_DEFVAR) {
-			ast_t* var = find_var(expr->name);
-			if (var) {
-				expr->offset = var->offset;
-			} else {
-				expr->offset = offset;
-				offset -= 4;
-			}
-			expr->next = locals;
-			locals = expr;
-		}
-		current_func->vars = locals; // TODO: fix hacky solution
-		vec_push_back(&body->list, expr);
-	}
-
-	advance_token_type(parser, RIGHT_CURLY);
-	return body;
-}
-
-void push_args(parser_t* parser, ast_t* compound) {
-	if (peek_token(parser)->type != RIGHT_PAREN) {
-		vec_init(&compound->list, 1);
-	}
-
-	int offset = 8;
-	while (peek_token(parser)->type != RIGHT_PAREN) {
-		ast_t* arg = parse_expr(parser);
-		if (arg->type == AST_IDENTIFIER && current_func) {
-			ast_t* ast = find_var(arg->name);
-			if (ast) {
-				// TODO: fix a better solution for params
-				if (ast->value) {
-					ast_t* var = ast->value;
-					arg->value = var->value;
-				}
-				arg->arg_offset = ast->offset;
-				arg->type_specifier = ast->type_specifier;
-			} else {
-				go_error_at(parser->location, "undefined reference to '%s'", arg->name);
-			}
-		}
-		arg->offset = offset;
-		offset += 4;
-
-		vec_push_back(&compound->list, arg);
-	}
-}
-
-ast_t* parse_return(parser_t* parser) {
-	ast_t* ret = init_ast(AST_RETURN);
-	advance_token_type(parser, RETURN);
-
-	if (peek_token(parser)->type != RIGHT_PAREN) {
-		ast_t* expr = parse_expr(parser);
-		if (expr->type == AST_IDENTIFIER) {
-			ast_t* var = find_var(expr->name);
-			if (var) {
-				expr->offset = var->offset;
-			} else {
-				go_error_at(parser->location, "undefined reference to '%s'", expr->name);
-			}
-		}
-		ret->value = expr;
-	}
-
-	advance_token_type(parser, RIGHT_PAREN);
-	return ret;
-}
-
-ast_t* parse_defvar(parser_t* parser) {
-	ast_t* defvar = init_ast(AST_DEFVAR);
-	advance_token_type(parser, DEFVAR);
-
-	ast_t* var = parse_identifier(parser);
-	defvar->name = var->name;
-	ast_t* func = parse_identifier(parser);
-	defvar->value = func->name;
-
-	free(var);
-	free(func);
-
-	advance_token_type(parser, RIGHT_PAREN);
-	return defvar;
-}
-
-ast_t* parse_funcall(parser_t* parser) {
-	ast_t* funcall = init_ast(AST_FUNCALL);
-	advance_token_type(parser, FUNCALL);
-
-	ast_t* identifier = parse_identifier(parser);
-	funcall->name = identifier->name;
-	push_args(parser, funcall);
-
-	ast_t* defvar = find_var(funcall->name);
-	free(funcall->name);
-
-	if (defvar) {
-		funcall->name = defvar->value;
-		funcall->value = defvar->value;
-		funcall->offset = defvar->offset;
-		funcall->defvar = defvar;
-	} else {
-		go_error_at(parser->location, "undefined reference to '%s'", funcall->name);
-	}
-
-	free(identifier);
-
-	advance_token_type(parser, RIGHT_PAREN);
-	return funcall;
-}
-
-ast_t* parse_stmt(parser_t* parser) {
-	token_t* token = peek_token(parser);
-
-	if (token->type == IF) {
-		ast_t* ast = init_ast(AST_IF);
-		advance_token_type(parser, IF);
-		advance_token_type(parser, LEFT_PAREN);
-		ast->cond = parse_cond(parser);
-		advance_token_type(parser, RIGHT_PAREN);
-		ast->body = parse_body(parser);
-
-		token_t* token = peek_token(parser);
-		if (token->type == ELSE) {
-			advance_token_type(parser, ELSE);
-			ast->els = parse_body(parser);
-		}
-		return ast;
-	}
-
-	return NULL;
-}
-
-static void set_cond(parser_t* parser, ast_t* lhs) {
-	token_t* token = peek_token(parser);
-	if (token->type == IDENTIFIER) {
-		ast_t* var = find_var(token->value);
-		if (var) {
-			ast_t* val = var->value;
-			lhs->offset = var->offset;
-			lhs->value = val->value;
-		} else {
-			go_error_at(parser->location, "undefined reference to '%s'", token->value);
-		}
-		lhs->value = token->value;
-	} else {
-		lhs->value = token->value;
-	}
-	lhs->type_specifier = token->type;
-}
-
-ast_t* parse_cond(parser_t* parser) {
-	ast_t* cond = init_ast(AST_COND);
-
-	ast_t* lhs = init_ast(AST_COND);
-	set_cond(parser, lhs);
-	advance_token(parser);
-
-	if (peek_token(parser)->type == EQUAL) {
-		advance_token(parser);
-		ast_t* rhs = init_ast(AST_COND);
-		set_cond(parser, rhs);
-		advance_token(parser);
-		cond->lhs = lhs;
-		cond->rhs = rhs;
-	}
-
-	return cond;
-}
-
-ast_t* parse_identifier(parser_t* parser) {
-	token_t* token = peek_token(parser);
-
-	ast_t* identifier = init_ast(AST_IDENTIFIER);
-	identifier->name = token->value;
-	advance_token_type(parser, IDENTIFIER);
-
-	return identifier;
-}
-
-ast_t* parse_string(parser_t* parser) {
-	token_t* token = peek_token(parser);
-
-	ast_t* string = init_ast(AST_STRING);
-	string->value = token->value;
-	string->type_specifier = STRING;
-	advance_token_type(parser, STRING_LITERAL);
-
-	return string;
-}
-
-ast_t* parse_int(parser_t* parser) {
-	token_t* token = peek_token(parser);
-
-	ast_t* number = init_ast(AST_INT);
-	number->value = token->value;
-	number->type_specifier = INT;
-	advance_token_type(parser, INT_NUMBER);
-
-	return number;
-}
-
-ast_t* parse_compound(parser_t* parser) {
-	ast_t* compound = init_ast(AST_COMPOUND);
-	advance_token_type(parser, LEFT_PAREN);
-
-	token_t* token = peek_token(parser);
-	if (token->type == ASSIGN) {
-		advance_token_type(parser, ASSIGN);
-		compound->type = AST_ASSIGNMENT;
-
-		ast_t* identifier = parse_expr(parser);
-		if (identifier != NULL && identifier->type == AST_IDENTIFIER) {
-			compound->name = identifier->name;
-		} else {
-			go_error_at(parser->location, "expected identifier after '=' token");
-		}
-		free(identifier);
-
-		ast_t* expr = parse_expr(parser);
-		if (expr) {
-			if (expr->type == AST_IDENTIFIER) {
-				ast_t* var = find_var(expr->name);
-				if (var) {
-					expr->offset = var->offset;
-				} else {
-					go_error_at(parser->location, "undefined reference to '%s'", expr->name);
-				}
-			}
-			compound->value = expr;
-		} else {
-			go_error_at(parser->location, "expected compound expression");
-		}
-
-		if (peek_token(parser)->type != RIGHT_PAREN) {
-			go_error_at(parser->location, "expected ')' to close compound expression");
-		}
-	} else if (token->type == IDENTIFIER) {
-		ast_t* identifier = parse_identifier(parser);
-		compound->name = identifier->name;
-		compound->type = AST_CALL;
-
-		push_args(parser, compound);
-
-		free(identifier);
-	} else if (token->type == RETURN) {
-		free(compound);
-		return parse_return(parser);
-	} else if (token->type == DEFVAR) {
-		free(compound);
-		return parse_defvar(parser);
-	} else if (token->type == FUNCALL) {
-		free(compound);
-		return parse_funcall(parser);
-	}
-
-	advance_token_type(parser, RIGHT_PAREN);
-
-	if (compound->type == AST_COMPOUND) {
-		go_warning_at(parser->location, "compound declaration is empty\n");
-	}
-
-	return compound;
-}
-
-ast_t* parse_expr(parser_t* parser) {
-	token_t* token = peek_token(parser);
-
-	switch(token->type) {
-		case FN:		     return parse_func(parser);
-		case IF:		     return parse_stmt(parser);
-		case IDENTIFIER:	 return parse_identifier(parser);
-		case STRING_LITERAL: return parse_string(parser);
-		case INT_NUMBER:	 return parse_int(parser);
-		case LEFT_PAREN:	 return parse_compound(parser);
-		case SINGLE_LINE_COMMENT:
-			advance_token_type(parser, SINGLE_LINE_COMMENT);
-			break;
-		case MULTI_LINE_COMMENT:
-			advance_token_type(parser, MULTI_LINE_COMMENT);
-			break;
-		default:
-			break;
-	}
-
-	return NULL;
-}
-
-void parse_src(char* path, char* src) {
-	vec_t asts;
-	vec_init(&asts, 1);
-
-	location_t* location = malloc(sizeof(struct location_t));
-	location->path = path;
-	location->line = 1;
+obj_t* parse(char* path, char* src) {
+	globals = NULL;
+	declare_builtin_functions();
 
 	parser_t* parser = malloc(sizeof(struct parser_t));
 	parser->tokens = tokenize(src);
 	parser->head = vec_get(&parser->tokens, 0);
 	parser->tokens_parsed = 0;
-	parser->location = location;
 
-	while (peek_token(parser)->type != END_OF_FILE) {
-		ast_t* expr = parse_expr(parser);
-		if (expr) {
-			vec_push_back(&asts, expr);
+	while (peek(parser)->type != END_OF_FILE) {
+		if (peek(parser)->type == FN) {
+			obj_t* func = function(parser);
+			continue;
 		}
 	}
+	consume_type(parser, END_OF_FILE);
 
-	advance_token_type(parser, END_OF_FILE);
-	gen_asm(asts);
-
-	for (int i = 0; i < vec_length(&parser->tokens); ++i) {
-		token_t* token = vec_get(&parser->tokens, i);
-		free(token);
-	}
-
-	vec_free(&asts);
-	vec_free(&parser->tokens);
-
-	free(parser);
-	free(location);
+	return globals;
 }

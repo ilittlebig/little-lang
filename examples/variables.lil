@@ -1,0 +1,7 @@
+fn main() : void {
+	int : (= a 10)
+	int : (= b a)
+
+	int : (= c 1234)
+	string : (= d "Hello World\n")
+}

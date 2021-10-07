@@ -22,7 +22,7 @@ typedef enum token_type_t {
 	DEFVAR,
 	FUNCALL,
 
-	INT_NUMBER,
+	NUMBER,
 	IDENTIFIER,
 
 	GREATER_OR_EQUAL,

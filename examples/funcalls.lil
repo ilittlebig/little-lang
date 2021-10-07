@@ -4,13 +4,12 @@ fn f() : void {
 fn foo(int a, int b) : void {
 }
 
-fn boo(int a, int b, int c) : int {
+fn boo(int a, int b, string c) : int {
 	(return 10)
 }
 
 fn main() : void {
 	(f)
 	(foo 1 2)
-	(defvar a boo)
-	(funcall a 2 3 5) // 'a' will be '10'
+	(defvar a (boo 2 3 "Hello World\n"))
 }

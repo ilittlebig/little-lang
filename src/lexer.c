@@ -73,7 +73,7 @@ char* token_to_str(token_type_t token_type) {
 		case FLOAT:					  return "FLOAT";
 		case STRING:				  return "STRING";
 		case VOID:					  return "VOID";
-		case INT_NUMBER:			  return "INT_NUMBER";
+		case NUMBER:				  return "NUMBER";
 		case IDENTIFIER:			  return "IDENTIFIER";
 		case GREATER_OR_EQUAL:		  return "GREATER_OR_EQUAL";
 		case EQUAL:					  return "EQUAL";
@@ -131,7 +131,7 @@ token_t* read_digit(tokenizer_t* tokenizer) {
 		}
 	}
 
-	token->type = INT_NUMBER;
+	token->type = NUMBER;
 	token->value = digit;
 	return token;
 }
@@ -356,6 +356,9 @@ token_t* next_token(tokenizer_t* tokenizer) {
 		case ':':
 			token->type = COLON;
 			break;
+		case ';':
+			token->type = SEMICOLON;
+			break;
 		case ',':
 			token->type = COMMA;
 			break;
@@ -395,7 +398,7 @@ vec_t tokenize(const char* input) {
 
 	while (!is_eof(tokenizer)) {
 		token_t* token = next_token(tokenizer);
-		if (token->type != WHITESPACE) {
+		if (token->type != WHITESPACE && token->type != SINGLE_LINE_COMMENT && token->type != MULTI_LINE_COMMENT) {
 			vec_push_back(&tokens, token);
 		} else {
 			free(token);

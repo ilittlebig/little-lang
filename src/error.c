@@ -1,3 +1,4 @@
+/*
 #include <stdarg.h>
 #include "error.h"
 
@@ -45,3 +46,4 @@ void go_warning_at(location_t* location, char* message, ...) {
 	va_end(args);
 	printf("\n");
 }
+*/
