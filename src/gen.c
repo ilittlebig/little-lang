@@ -49,6 +49,22 @@ static int push_args(node_t* node) {
 	return args;
 }
 
+static void emit_cond_jmp(node_t* node, int c) {
+	if (node->kind == ND_EQUAL) {
+		emit("	jne .L%d", c);
+	} else if (node->kind == ND_NOT_EQUAL) {
+		emit("	je .L%d", c);
+	} else if (node->kind == ND_LESS) {
+		emit("	jng .L%d", c);
+	} else if (node->kind == ND_LESS_EQUAL) {
+		emit("	jnge .L%d", c);
+	} else if (node->kind == ND_GREATER) {
+		emit("	jnl .L%d", c);
+	} else if (node->kind == ND_GREATER_EQUAL) {
+		emit("	jnle .L%d", c);
+	}
+}
+
 static void emit_stmt(node_t* node) {
 	switch(node->kind) {
 		case ND_BLOCK:
@@ -91,9 +107,9 @@ static void emit_stmt(node_t* node) {
 			int c2 = count();
 
 			emit_expr(node->cond);
-			emit("	jne .L%d", c1);
+			emit_cond_jmp(node->cond, c1);
 			emit_stmt(node->then);
-			emit("	jne .L%d", c2);
+			emit("	jmp .L%d", c2);
 
 			if (node->els) {
 				emit(".L%d:", c1);
@@ -107,7 +123,7 @@ static void emit_stmt(node_t* node) {
 static void emit_expr(node_t* node) {
 	switch(node->kind) {
 		case ND_NULL_EXPR:
-			return;
+			break;
 		case ND_ASSIGN:
 			switch(node->rhs->kind) {
 				case ND_NUM:
@@ -128,17 +144,29 @@ static void emit_expr(node_t* node) {
 
 			switch(node->rhs->kind) {
 				case ND_EQUAL:
+				case ND_NOT_EQUAL:
 					emit("	mov %%al, %d(%%ebp)", node->lhs->var->offset);
 					break;
+				case ND_LESS:
+				case ND_LESS_EQUAL:
+				case ND_GREATER:
+				case ND_GREATER_EQUAL:
+					emit("	movzbl %%al, %%eax");
+					emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
+					break;
 			}
-
 			return;
 		case ND_STMT:
 			for (node_t* n = node->body; n; n = n->next) {
 				emit_stmt(n);
 			}
-			return;
+			break;
 		case ND_EQUAL:
+		case ND_NOT_EQUAL:
+		case ND_LESS:
+		case ND_LESS_EQUAL:
+		case ND_GREATER:
+		case ND_GREATER_EQUAL:
 			switch(node->lhs->kind) {
 				case ND_NUM:
 					emit("	movl $%s, %%eax", node->lhs->val);
@@ -160,11 +188,20 @@ static void emit_expr(node_t* node) {
 
 			if (node->kind == ND_EQUAL) {
 				emit("	sete %%al");
+			} else if (node->kind == ND_NOT_EQUAL) {
+				emit("	setne %%al");
+			} else if (node->kind == ND_LESS) {
+				emit("	setg %%al");
+			} else if (node->kind == ND_LESS_EQUAL) {
+				emit("	setge %%al");
+			} else if (node->kind == ND_GREATER) {
+				emit("	setl %%al");
+			} else if (node->kind == ND_GREATER_EQUAL) {
+				emit("	setle %%al");
 			}
-			return;
-		case ND_COND:
-			return;
+			break;
 	}
+	return;
 }
 
 static void assign_lvar_offsets(obj_t* fn) {

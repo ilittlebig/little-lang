@@ -38,7 +38,7 @@ typedef enum token_type_t {
 	RIGHT_CURLY,
 
 	ADD,
-	MINUS,
+	SUB,
 	MUL,
 	DIV,
 	MOD,

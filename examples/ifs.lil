@@ -33,4 +33,52 @@ fn main() : void {
 	} else {
 		(print "false\n")
 	}
+
+	if (< 0 1) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (<= 0 0) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (<= 1 0) { /* will print false */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (> 1 0) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (>= 1 1) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (>= 1 2) { /* will print false */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (!= 1 2) { /* will print true */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
+
+	if (!= 2 2) { /* will print false */
+		(print "true\n")
+	} else {
+		(print "false\n")
+	}
 }

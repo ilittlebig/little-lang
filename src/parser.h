@@ -4,21 +4,26 @@
 #include "lexer.h"
 
 typedef enum node_kind_t {
-	ND_NULL_EXPR, // Nothing
-	ND_EQUAL,	  // ==
-	ND_ASSIGN,	  // =
-	ND_COND,	  // Condition // UNUSED
-	ND_RETURN,	  // "return"
-	ND_DEFVAR,    // "defvar" // UNUSED
-	ND_FUNCALL,   // "funcall" // UNUSED
-	ND_IF,		  // "if" // UNUSED
-	ND_NUM,		  // Integer
-	ND_VAR,		  // Variable
-	ND_EXPR,	  // Expression
-	ND_STMT,	  // Statement // UNUSED
-	ND_CALL,	  // Function call
-	ND_BLOCK,	  // Block
-	ND_IDENT	  // Identifier
+	ND_NULL_EXPR,     // Nothing
+	ND_EQUAL,	      // ==
+	ND_NOT_EQUAL,	  // !=
+	ND_LESS,     // <
+	ND_LESS_EQUAL,    // <=
+	ND_GREATER,  // >
+	ND_GREATER_EQUAL, // >=
+	ND_ASSIGN,	      // =
+	ND_RETURN,	      // 'return'
+	ND_DEFVAR,        // 'defvar'
+	ND_IF,		      // 'if'
+	ND_NUM,		      // Integer
+	ND_VAR,		      // Variable
+	ND_EXPR,	      // Expression
+	ND_STMT,	      // Statement     UNUSED
+	ND_CALL,	      // Function call
+	ND_BLOCK,	      // Block
+	ND_ADD,		      // '+'		   UNUSED
+	ND_SUB,		      // '-'		   UNUSED
+	ND_IDENT	      // Identifier
 } node_kind_t;
 
 typedef struct node_t node_t;
@@ -100,6 +105,8 @@ static node_t* read_var(parser_t* parser);
 static node_t* read_number(parser_t* parser);
 static node_t* read_string(parser_t* parser);
 static node_t* expr(parser_t* parser);
+static node_t* add(parser_t* parser);
+static node_t* relational(parser_t* parser);
 static node_t* equality(parser_t* parser);
 static node_t* assign(parser_t* parser);
 static void func_params(parser_t* parser);

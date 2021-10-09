@@ -258,6 +258,78 @@ static node_t* expr(parser_t* parser) {
 	}
 }
 
+static node_t* add(parser_t* parser) {
+	node_t* node;
+
+	if (peek2(parser)->type == ADD) {
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, ADD);
+
+		node = equality(parser);
+		node = new_binary(ND_ADD, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == SUB) {
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, SUB);
+
+		node = equality(parser);
+		node = new_binary(ND_SUB, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	}
+
+	node = expr(parser);
+	return node;
+}
+
+static node_t* relational(parser_t* parser) {
+	node_t* node;
+
+	if (peek2(parser)->type == LESS) { // <
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, LESS);
+
+		node = equality(parser);
+		node = new_binary(ND_LESS, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == LESS_OR_EQUAL) { // <=
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, LESS_OR_EQUAL);
+
+		node = equality(parser);
+		node = new_binary(ND_LESS_EQUAL, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == GREATER) { // >
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, GREATER);
+
+		node = equality(parser);
+		node = new_binary(ND_GREATER, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == GREATER_OR_EQUAL) { // >=
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, GREATER_OR_EQUAL);
+
+		node = equality(parser);
+		node = new_binary(ND_GREATER_EQUAL, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	}
+
+	node = add(parser);
+	return node;
+}
+
 static node_t* equality(parser_t* parser) {
 	node_t* node;
 
@@ -266,13 +338,22 @@ static node_t* equality(parser_t* parser) {
 		consume_type(parser, EQUAL);
 
 		node = equality(parser);
-		node = new_binary(ND_EQUAL, node, expr(parser), peek(parser));
+		node = new_binary(ND_EQUAL, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == NOT_EQUAL) {
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, NOT_EQUAL);
+
+		node = equality(parser);
+		node = new_binary(ND_NOT_EQUAL, node, assign(parser), peek(parser));
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
 	}
 
-	node = expr(parser);
+	node = relational(parser);
 	return node;
 }
 

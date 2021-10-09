@@ -86,7 +86,7 @@ char* token_to_str(token_type_t token_type) {
 		case LEFT_CURLY:			  return "LEFT_CURLY";
 		case RIGHT_CURLY:			  return "RIGHT_CURLY";
 		case ADD:					  return "ADD";
-		case MINUS:					  return "MINUS";
+		case SUB:					  return "SUB";
 		case MUL:					  return "MUL";
 		case DIV:					  return "DIV";
 		case MOD:					  return "MOD";
@@ -119,6 +119,10 @@ token_t* read_digit(tokenizer_t* tokenizer) {
 	while (true) {
 		const char c = input[tokenizer->pos];
 		if (c == '.') {
+			size++;
+			digit = realloc(digit, size);
+			digit[size-1] = input[tokenizer->pos++];
+		} else if (c == '-') {
 			size++;
 			digit = realloc(digit, size);
 			digit[size-1] = input[tokenizer->pos++];
@@ -323,7 +327,11 @@ token_t* next_token(tokenizer_t* tokenizer) {
 			token->type = ADD;
 			break;
 		case '-':
-			token->type = MINUS;
+			if (isdigit(tokenizer->input[tokenizer->pos + 1])) {
+				free(token);
+				return read_digit(tokenizer);
+			}
+			token->type = SUB;
 			break;
 		case '*':
 			token->type = MUL;
