@@ -31,6 +31,11 @@ static void push_args2(node_t* node) {
 			}
 			emit("	pushl %d(%%ebp)", node->var->offset);
 			break;
+		case ND_ADD:
+		case ND_SUB:
+			emit_expr(node);
+			emit("	pushl %%ecx");
+			break;
 		default:
 			emit_expr(node);
 			emit("	push %%ax");
@@ -102,6 +107,7 @@ static void emit_stmt(node_t* node) {
 					emit_expr(node->lhs);
 					break;
 			}
+			break;
 		case ND_IF:
 			int c1 = count();
 			int c2 = count();
@@ -143,6 +149,10 @@ static void emit_expr(node_t* node) {
 			}
 
 			switch(node->rhs->kind) {
+				case ND_ADD:
+				case ND_SUB:
+					emit("	movl %%ecx, %d(%%ebp)", node->lhs->var->offset);
+					break;
 				case ND_EQUAL:
 				case ND_NOT_EQUAL:
 					emit("	mov %%al, %d(%%ebp)", node->lhs->var->offset);
@@ -160,6 +170,43 @@ static void emit_expr(node_t* node) {
 			for (node_t* n = node->body; n; n = n->next) {
 				emit_stmt(n);
 			}
+			break;
+		case ND_ADD:
+		case ND_SUB:
+			emit_expr(node->rhs);
+			emit_expr(node->lhs);
+
+			switch(node->rhs->kind) {
+				case ND_NUM:
+					emit("	pushl $%s", node->rhs->val);
+					break;
+				case ND_VAR:
+					emit("	pushl %d(%%ebp)", node->rhs->var->offset);
+					break;
+			}
+			emit("	movl (%%esp), %%ecx");
+
+			switch(node->lhs->kind) {
+				case ND_NUM:
+					emit("	pushl $%s", node->lhs->val);
+					break;
+				case ND_VAR:
+					emit("	pushl %d(%%ebp)", node->lhs->var->offset);
+					break;
+			}
+			emit("	movl (%%esp), %%ecx");
+			emit("	popl %%eax");
+
+			if (node->kind == ND_ADD) {
+				emit("	addl (%%esp), %%eax");
+			} else if (node->kind == ND_SUB) {
+				emit("	subl (%%esp), %%eax");
+			}
+
+			emit("	addl $4, %%esp");
+			emit("	pushl %%eax");
+			emit("	movl (%%esp), %%ecx");
+
 			break;
 		case ND_EQUAL:
 		case ND_NOT_EQUAL:
