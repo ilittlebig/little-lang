@@ -21,8 +21,11 @@ typedef enum node_kind_t {
 	ND_STMT,	      // Statement     UNUSED
 	ND_CALL,	      // Function call
 	ND_BLOCK,	      // Block
-	ND_ADD,		      // '+'		   UNUSED
-	ND_SUB,		      // '-'		   UNUSED
+	ND_ADD,		      // '+'
+	ND_SUB,		      // '-'
+	ND_MUL,		      // '*'
+	ND_DIV,		      // '/'
+	ND_MOD,		      // '%'
 	ND_IDENT	      // Identifier
 } node_kind_t;
 
@@ -106,6 +109,7 @@ static node_t* read_number(parser_t* parser);
 static node_t* read_string(parser_t* parser);
 static node_t* expr(parser_t* parser);
 static node_t* add(parser_t* parser);
+static node_t* mul(parser_t* parser);
 static node_t* relational(parser_t* parser);
 static node_t* equality(parser_t* parser);
 static node_t* assign(parser_t* parser);

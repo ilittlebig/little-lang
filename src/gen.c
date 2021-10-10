@@ -33,6 +33,9 @@ static void push_args2(node_t* node) {
 			break;
 		case ND_ADD:
 		case ND_SUB:
+		case ND_MUL:
+		case ND_DIV:
+		case ND_MOD:
 			emit_expr(node);
 			emit("	pushl %%ecx");
 			break;
@@ -151,7 +154,12 @@ static void emit_expr(node_t* node) {
 			switch(node->rhs->kind) {
 				case ND_ADD:
 				case ND_SUB:
+				case ND_MUL:
 					emit("	movl %%ecx, %d(%%ebp)", node->lhs->var->offset);
+					break;
+				case ND_DIV:
+				case ND_MOD:
+					emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
 					break;
 				case ND_EQUAL:
 				case ND_NOT_EQUAL:
@@ -173,6 +181,9 @@ static void emit_expr(node_t* node) {
 			break;
 		case ND_ADD:
 		case ND_SUB:
+		case ND_MUL:
+		case ND_DIV:
+		case ND_MOD:
 			emit_expr(node->rhs);
 			emit_expr(node->lhs);
 
@@ -201,6 +212,15 @@ static void emit_expr(node_t* node) {
 				emit("	addl (%%esp), %%eax");
 			} else if (node->kind == ND_SUB) {
 				emit("	subl (%%esp), %%eax");
+			} else if (node->kind == ND_MUL) {
+				emit("	imul (%%esp), %%eax");
+			} else if (node->kind == ND_DIV) {
+				emit("	cdq");
+				emit("	idiv (%%esp), %%eax");
+			} else if (node->kind == ND_MOD) {
+				emit("	cdq");
+				emit("	idiv (%%esp), %%eax");
+				emit("	movl %%edx, %%eax");
 			}
 
 			emit("	addl $4, %%esp");

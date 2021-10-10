@@ -261,7 +261,7 @@ static node_t* expr(parser_t* parser) {
 static node_t* add(parser_t* parser) {
 	node_t* node;
 
-	if (peek2(parser)->type == ADD) {
+	if (peek2(parser)->type == ADD) { // +
 		consume_type(parser, LEFT_PAREN);
 		consume_type(parser, ADD);
 
@@ -270,7 +270,7 @@ static node_t* add(parser_t* parser) {
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
-	} else if (peek2(parser)->type == SUB) {
+	} else if (peek2(parser)->type == SUB) { // -
 		consume_type(parser, LEFT_PAREN);
 		consume_type(parser, SUB);
 
@@ -285,6 +285,41 @@ static node_t* add(parser_t* parser) {
 	return node;
 }
 
+static node_t* mul(parser_t* parser) {
+	node_t* node;
+
+	if (peek2(parser)->type == MUL) { // *
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, MUL);
+
+		node = equality(parser);
+		node = new_binary(ND_MUL, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == DIV) { // /
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, DIV);
+
+		node = equality(parser);
+		node = new_binary(ND_DIV, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	} else if (peek2(parser)->type == MOD) { // %
+		consume_type(parser, LEFT_PAREN);
+		consume_type(parser, MOD);
+
+		node = equality(parser);
+		node = new_binary(ND_MOD, node, assign(parser), peek(parser));
+
+		consume_type(parser, RIGHT_PAREN);
+		return node;
+	}
+
+	node = add(parser);
+	return node;
+}
 static node_t* relational(parser_t* parser) {
 	node_t* node;
 
@@ -326,14 +361,14 @@ static node_t* relational(parser_t* parser) {
 		return node;
 	}
 
-	node = add(parser);
+	node = mul(parser);
 	return node;
 }
 
 static node_t* equality(parser_t* parser) {
 	node_t* node;
 
-	if (peek2(parser)->type == EQUAL) {
+	if (peek2(parser)->type == EQUAL) { // ==
 		consume_type(parser, LEFT_PAREN);
 		consume_type(parser, EQUAL);
 
@@ -342,7 +377,7 @@ static node_t* equality(parser_t* parser) {
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
-	} else if (peek2(parser)->type == NOT_EQUAL) {
+	} else if (peek2(parser)->type == NOT_EQUAL) { // !=
 		consume_type(parser, LEFT_PAREN);
 		consume_type(parser, NOT_EQUAL);
 

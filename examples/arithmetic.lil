@@ -4,12 +4,38 @@ fn main() : void {
 	int : (= c (+ (- 5 2) (- 5 2)))
 	int : (= d (+ (- 5 2) (- (- 5 2) 2)))
 
+	int : (= e (* 10 10))
+	int : (= f (* 10 (+ 20 20)))
+	int : (= g (* 10 (/ 10 2)))
+
+	int : (= h (% 10 2))
+	int : (= i (% 10 3))
+	int : (= j (/ 10 2))
+	int : (= k (/ 10 5))
+
 	(printi a) // 20
 	(printi b) // 13
 	(printi c) // 6
 	(printi d) // 2
 
+	(printi e) // 100
+	(printi f) // 400
+	(printi g) // 50
+
+	(printi h) // 0
+	(printi i) // 1
+	(printi j) // 5
+	(printi k) // 2
+
 	(printi (+ 10 10)) // 20
 	(printi (- 11 10)) // 1
 	(printi (- (+ 5 5) 10)) // 0
+
+	(printi (* (+ 5 5) 10)) // 100
+	(printi (* 2 10)) // 20
+
+	(printi (% 10 2)) // 0
+	(printi (% 10 3)) // 1
+	(printi (/ 10 2)) // 5
+	(printi (/ 10 5)) // 2
 }
