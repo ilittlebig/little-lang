@@ -146,10 +146,10 @@ static node_t* stmt(parser_t* parser) {
 		consume_type(parser, IF);
 
 		node->cond = assign(parser);
-		node->then = compound_stmt(parser);
+		node->then = stmt(parser);
 		if (peek(parser)->type == ELSE) {
 			consume_type(parser, ELSE);
-			node->els = compound_stmt(parser);
+			node->els = stmt(parser);
 		}
 
 		return node;
@@ -202,6 +202,10 @@ static node_t* stmt(parser_t* parser) {
 		node_t* node = new_unary(ND_CALL, fn, token);
 		node->args = head.next;
 		return node;
+	}
+
+	if (peek(parser)->type == LEFT_CURLY) {
+		return compound_stmt(parser);
 	}
 
 	node_t* node = new_node(ND_EXPR, peek(parser));
