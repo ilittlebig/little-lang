@@ -139,6 +139,20 @@ static void emit_stmt(node_t* node) {
 			emit(".L.end.%d:", c);
 			break;
 		}
+		case ND_FOR: {
+			int c = count();
+
+			emit_stmt(node->init);
+			emit(".L.begin.%d:", c);
+			emit_expr(node->cond);
+			emit_cond_jmp(node->cond, "end", c);
+			emit_stmt(node->then);
+			emit_expr(node->loop);
+
+			emit("	jmp .L.begin.%d", c);
+			emit(".L.end.%d:", c);
+			break;
+		}
 	}
 }
 

@@ -166,6 +166,29 @@ static node_t* stmt(parser_t* parser) {
 		return node;
 	}
 
+	if (peek(parser)->type == FOR) {
+		token_t* token = peek(parser);
+		node_t* node = new_node(ND_FOR, token);
+		consume_type(parser, FOR);
+
+		consume_type(parser, LEFT_PAREN);
+		if (is_typename(peek(parser))) {
+			node->init = declaration(parser);
+		} else {
+			node->init = stmt(parser);
+		}
+		consume_type(parser, SEMICOLON);
+
+		node->cond = assign(parser);
+		consume_type(parser, SEMICOLON);
+
+		node->loop = assign(parser);
+		consume_type(parser, RIGHT_PAREN);
+		node->then = compound_stmt(parser);
+
+		return node;
+	}
+
 	if (peek2(parser)->type == DEFVAR) {
 		token_t* token = peek2(parser);
 		consume_type(parser, LEFT_PAREN);

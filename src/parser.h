@@ -16,6 +16,7 @@ typedef enum node_kind_t {
 	ND_DEFVAR,        // 'defvar'
 	ND_IF,		      // 'if'
 	ND_WHILE,		  // 'while'
+	ND_FOR,			  // 'for'
 	ND_NUM,		      // Integer
 	ND_VAR,		      // Variable
 	ND_EXPR,	      // Expression
@@ -60,7 +61,9 @@ struct node_t {
 	node_t* lhs;
 	node_t* rhs;
 
+	node_t* init;
 	node_t* cond;
+	node_t* loop;
 	node_t* then;
 	node_t* els;
 

@@ -14,6 +14,7 @@ typedef enum token_type_t {
 	FN,
 	IF,
 	WHILE,
+	FOR,
 	ELSE,
 	INT,
 	FLOAT,
