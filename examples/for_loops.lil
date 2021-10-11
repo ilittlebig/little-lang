@@ -9,4 +9,11 @@ fn main() : void {
 	for ((= a 0); (< a 6); (= a (+ a 1))) { /* prints 0 → 5 */
 		(printi a)
 	}
+
+	(print "\n")
+
+	int : (= a 0)
+	for (a; (< a 6); (= a (+ a 1))) { /* prints 0 → 5 */
+		(printi a)
+	}
 }
