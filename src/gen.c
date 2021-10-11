@@ -57,19 +57,19 @@ static int push_args(node_t* node) {
 	return args;
 }
 
-static void emit_cond_jmp(node_t* node, int c) {
+static void emit_cond_jmp(node_t* node, char* section, int c) {
 	if (node->kind == ND_EQUAL) {
-		emit("	jne .L%d", c);
+		emit("	jne .L.%s.%d", section, c);
 	} else if (node->kind == ND_NOT_EQUAL) {
-		emit("	je .L%d", c);
+		emit("	je .L.%s.%d", section, c);
 	} else if (node->kind == ND_LESS) {
-		emit("	jng .L%d", c);
+		emit("	jng .L.%s.%d", section, c);
 	} else if (node->kind == ND_LESS_EQUAL) {
-		emit("	jnge .L%d", c);
+		emit("	jnge .L.%s.%d", section, c);
 	} else if (node->kind == ND_GREATER) {
-		emit("	jnl .L%d", c);
+		emit("	jnl .L.%s.%d", section, c);
 	} else if (node->kind == ND_GREATER_EQUAL) {
-		emit("	jnle .L%d", c);
+		emit("	jnle .L.%s.%d", section, c);
 	}
 }
 
@@ -111,21 +111,34 @@ static void emit_stmt(node_t* node) {
 					break;
 			}
 			break;
-		case ND_IF:
-			int c1 = count();
-			int c2 = count();
+		case ND_IF: {
+			int c = count();
 
 			emit_expr(node->cond);
-			emit_cond_jmp(node->cond, c1);
+			emit_cond_jmp(node->cond, "else", c);
 			emit_stmt(node->then);
-			emit("	jmp .L%d", c2);
+			emit("	jmp .L.end.%d", c);
 
+			emit(".L.else.%d:", c);
 			if (node->els) {
-				emit(".L%d:", c1);
 				emit_stmt(node->els);
 			}
-			emit(".L%d:", c2);
+
+			emit(".L.end.%d:", c);
 			break;
+		}
+		case ND_WHILE: {
+			int c = count();
+
+			emit(".L.begin.%d:", c);
+			emit_expr(node->cond);
+			emit_cond_jmp(node->cond, "end", c);
+			emit_stmt(node->then);
+
+			emit("	jmp .L.begin.%d", c);
+			emit(".L.end.%d:", c);
+			break;
+		}
 	}
 }
 
@@ -241,6 +254,9 @@ static void emit_expr(node_t* node) {
 				case ND_VAR:
 					emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
 					break;
+				default:
+					emit_expr(node->lhs);
+					break;
 			}
 
 			switch(node->rhs->kind) {
@@ -249,6 +265,9 @@ static void emit_expr(node_t* node) {
 					break;
 				case ND_VAR:
 					emit("	movl %d(%%ebp), %%edi", node->rhs->var->offset);
+					break;
+				default:
+					emit_expr(node->rhs);
 					break;
 			}
 			emit("	cmpl %%eax, %%edi");

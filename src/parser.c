@@ -14,6 +14,12 @@ static token_t* peek2(parser_t* parser) {
 	return parser->head;
 }
 
+static token_t* peekn(parser_t* parser, int n) {
+	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed + n);
+	parser->head = token;
+	return parser->head;
+}
+
 static void consume(parser_t* parser) {
 	token_t* token = vec_get(&parser->tokens, parser->tokens_parsed);
 	parser->tokens_parsed++;
@@ -111,6 +117,7 @@ static node_t* declaration(parser_t* parser) {
 	consume_type(parser, type);
 	consume_type(parser, COLON);
 
+	obj_t* var = new_lvar(peekn(parser, 2)->value, type);
 	node_t* expr = assign(parser);
 	cur = cur->next = new_unary(ND_EXPR, expr, peek(parser));
 
@@ -144,6 +151,17 @@ static node_t* stmt(parser_t* parser) {
 			consume_type(parser, ELSE);
 			node->els = compound_stmt(parser);
 		}
+
+		return node;
+	}
+
+	if (peek(parser)->type == WHILE) {
+		token_t* token = peek(parser);
+		node_t* node = new_node(ND_WHILE, token);
+		consume_type(parser, WHILE);
+
+		node->cond = assign(parser);
+		node->then = compound_stmt(parser);
 
 		return node;
 	}
@@ -186,8 +204,9 @@ static node_t* stmt(parser_t* parser) {
 		return node;
 	}
 
-	error_at("expected statement\n");
-	return NULL;
+	node_t* node = new_node(ND_EXPR, peek(parser));
+	node->lhs = assign(parser);
+	return node;
 }
 
 static node_t* compound_stmt(parser_t* parser) {
@@ -400,15 +419,9 @@ static node_t* assign(parser_t* parser) {
 			consume_type(parser, LEFT_PAREN);
 			consume_type(parser, ASSIGN);
 
-			token_t* token = peek(parser);
-			consume_type(parser, IDENTIFIER);
-
-			obj_t* var = new_lvar(token->value, token->type);
-			node_t* lhs = new_node(ND_VAR, token);
-			lhs->var = var;
-
+			node_t* var = read_var(parser);
 			node_t* rhs = assign(parser);
-			node_t* node = new_binary(ND_ASSIGN, lhs, rhs, token);
+			node_t* node = new_binary(ND_ASSIGN, var, rhs, token);
 
 			consume_type(parser, RIGHT_PAREN);
 			return node;

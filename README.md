@@ -18,5 +18,5 @@ Compiler and tools for the Little programming language.
 - [ ] Arrays
 - [x] If Statements
 - [ ] For-Loops
-- [ ] While-Loops
+- [x] While-Loops
 - [x] Variable Assignments

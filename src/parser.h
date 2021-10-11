@@ -7,14 +7,15 @@ typedef enum node_kind_t {
 	ND_NULL_EXPR,     // Nothing
 	ND_EQUAL,	      // ==
 	ND_NOT_EQUAL,	  // !=
-	ND_LESS,     // <
+	ND_LESS,		  // <
 	ND_LESS_EQUAL,    // <=
-	ND_GREATER,  // >
+	ND_GREATER,		  // >
 	ND_GREATER_EQUAL, // >=
 	ND_ASSIGN,	      // =
 	ND_RETURN,	      // 'return'
 	ND_DEFVAR,        // 'defvar'
 	ND_IF,		      // 'if'
+	ND_WHILE,		  // 'while'
 	ND_NUM,		      // Integer
 	ND_VAR,		      // Variable
 	ND_EXPR,	      // Expression
@@ -88,6 +89,7 @@ static obj_t* current_func;
 
 static token_t* peek(parser_t* parser);
 static token_t* peek2(parser_t* parser);
+static token_t* peekn(parser_t* parser, int n);
 static void consume(parser_t* parser);
 static void consume_type(parser_t* parser, token_type_t token_type);
 

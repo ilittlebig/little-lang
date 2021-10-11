@@ -10,7 +10,7 @@ static int count();
 static void emit(char* fmt, ...);
 static void push_args2(node_t* node);
 static int push_args(node_t* node);
-static void emit_cond_jmp(node_t* node, int c);
+static void emit_cond_jmp(node_t* node, char* section, int c);
 static void emit_stmt(node_t* node);
 static void emit_expr(node_t* node);
 static void assign_lvar_offsets(obj_t* fn);

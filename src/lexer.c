@@ -39,6 +39,8 @@ token_type_t str_to_token(char* word) {
 		token_type = FN;
 	} else if (strcmp(word, "if") == 0) {
 		token_type = IF;
+	} else if (strcmp(word, "while") == 0) {
+		token_type = WHILE;
 	} else if (strcmp(word, "else") == 0) {
 		token_type = ELSE;
 	} else if (strcmp(word, "int") == 0) {
@@ -65,6 +67,7 @@ char* token_to_str(token_type_t token_type) {
 	switch (token_type) {
 		case FN:					  return "FN";
 		case IF:					  return "IF";
+		case WHILE:					  return "WHILE";
 		case ELSE:					  return "ELSE";
 		case RETURN:			      return "RETURN";
 		case DEFVAR:				  return "DEFVAR";

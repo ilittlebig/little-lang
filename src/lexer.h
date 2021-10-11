@@ -13,6 +13,7 @@ typedef enum token_type_t {
 	// Reserved Keywords
 	FN,
 	IF,
+	WHILE,
 	ELSE,
 	INT,
 	FLOAT,
