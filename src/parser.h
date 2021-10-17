@@ -42,13 +42,17 @@ struct obj_t {
 
 	int is_function;
 	int is_definition;
+	int is_builtin;
 
 	char* init_data;
 
 	obj_t* params;
 	node_t* body;
 	obj_t* locals;
-	int stack_size; // not using yet.
+	int stack_size;
+
+	token_type_t func_type;
+	node_t* return_buffer;
 
 	obj_t* next;
 };
@@ -61,6 +65,8 @@ struct node_t {
 	node_t* lhs;
 	node_t* rhs;
 
+	node_t* children;
+
 	node_t* init;
 	node_t* cond;
 	node_t* loop;
@@ -68,13 +74,9 @@ struct node_t {
 	node_t* els;
 
 	node_t* body;
-
-	char* label; // not using yet.
-	char* val;
-
-	token_type_t func_type; // not using yet.
 	node_t* args;
-	obj_t* return_buffer; // not using yet.
+
+	char* val;
 
 	obj_t* var;
 	node_t* next;
@@ -95,6 +97,7 @@ static token_t* peek2(parser_t* parser);
 static token_t* peekn(parser_t* parser, int n);
 static void consume(parser_t* parser);
 static void consume_type(parser_t* parser, token_type_t token_type);
+static void skip_until_next_brace(parser_t* parser);
 
 static int is_typename(token_t* token);
 static char* make_label();
@@ -121,6 +124,7 @@ static node_t* assign(parser_t* parser);
 static void func_params(parser_t* parser);
 static obj_t* function(parser_t* parser);
 
+static void declare_builtin_functions();
 obj_t* parse(char* path, char* src);
 
 #endif /* PARSER_H */

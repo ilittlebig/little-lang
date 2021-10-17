@@ -1,6 +1,25 @@
 # little-lang
 Compiler and tools for the Little programming language.
 
+## Examples
+### Hello World
+```
+fn main() : void {
+  (print "Hello, World!\n")
+}
+```
+### Add Two Numbers
+```
+fn add(int a, int b) : int {
+  (return (+ a b))
+}
+
+fn main() : void {
+  (defvar sum (add 5 10))
+  (printi sum)
+}
+```
+
 ## Features
 - [x] Addition (+)
 - [x] Subtraction (-)
@@ -20,3 +39,7 @@ Compiler and tools for the Little programming language.
 - [x] For-Loops
 - [x] While-Loops
 - [x] Variable Assignments
+
+## References
+
+[chibicc](https://github.com/rui314/chibicc/)

@@ -4,9 +4,9 @@
 #include "error.h"
 
 int has_error = 0;
-void error_at(char* message, ...) {
+void error_at(token_t* token, char* message, ...) {
 	printf("\033[1;37m");
-	printf("examples/main.lil:1: ");
+	printf("examples/main.lil:%d: ", token->line_no);
 	printf("\033[0m");
 
 	va_list args;
@@ -16,6 +16,8 @@ void error_at(char* message, ...) {
 	printf("\033[0m");
 	vprintf(message, args);
 	va_end(args);
+
+	printf("\n");
 
 	has_error = 1;
 }
@@ -38,16 +40,18 @@ void fatal_error(char* message, ...) {
 	has_error = 1;
 }
 
-void warning_at(char* message, ...) {
+void warning_at(token_t* token, char* message, ...) {
 	printf("\033[1;37m");
-	printf("examples/main.lil:1: ");
+	printf("examples/main.lil:%d: ", token->line_no);
 	printf("\033[0m");
 
 	va_list args;
 	va_start(args, message);
 	printf("\033[1;34m");
-	printf("error: ");
+	printf("warning: ");
 	printf("\033[0m");
 	vprintf(message, args);
 	va_end(args);
+
+	printf("\n");
 }

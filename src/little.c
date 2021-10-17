@@ -1,13 +1,17 @@
 #include "gen.h"
 #include "file.h"
 #include "error.h"
+#include "typer.h"
 #include "parser.h"
 
 static void compile_little(char* path) {
 	char* src = read_file(path);
 	if (src) {
 		obj_t* globals = parse(path, src);
+		type_check_program(globals);
+
 		if (has_error) {
+			printf("compilation failed\n");
 			return;
 		}
 

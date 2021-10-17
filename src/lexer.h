@@ -22,7 +22,8 @@ typedef enum token_type_t {
 	VOID,
 	RETURN,
 	DEFVAR,
-	FUNCALL,
+	LIST,
+	NTH,
 
 	NUMBER,
 	IDENTIFIER,
@@ -69,11 +70,13 @@ typedef enum token_type_t {
 
 typedef struct token_t {
 	token_type_t type;
+	size_t line_no;
 	char* value;
 } token_t;
 
 typedef struct tokenizer_t {
 	char* input;
+	size_t line_no;
 	size_t pos;
 } tokenizer_t;
 

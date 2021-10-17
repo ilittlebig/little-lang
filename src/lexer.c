@@ -57,8 +57,10 @@ token_type_t str_to_token(char* word) {
 		token_type = RETURN;
 	} else if (strcmp(word, "defvar") == 0) {
 		token_type = DEFVAR;
-	} else if (strcmp(word, "funcall") == 0) {
-		token_type = FUNCALL;
+	} else if (strcmp(word, "list") == 0) {
+		token_type = LIST;
+	} else if (strcmp(word, "nth") == 0) {
+		token_type = NTH;
 	} else {
 		token_type = UNIDENTIFIED;
 	}
@@ -74,7 +76,8 @@ char* token_to_str(token_type_t token_type) {
 		case ELSE:					  return "ELSE";
 		case RETURN:			      return "RETURN";
 		case DEFVAR:				  return "DEFVAR";
-		case FUNCALL:				  return "FUNCALL";
+		case LIST:					  return "LIST";
+		case NTH:					  return "NTH";
 		case INT:					  return "INT";
 		case FLOAT:					  return "FLOAT";
 		case STRING:				  return "STRING";
@@ -122,6 +125,8 @@ token_t* read_digit(tokenizer_t* tokenizer) {
 	char* digit = calloc(0, sizeof(char));
 	int size = 0;
 
+	token->line_no = tokenizer->line_no;
+
 	while (true) {
 		const char c = input[tokenizer->pos];
 		if (c == '.') {
@@ -156,6 +161,7 @@ token_t* read_string(tokenizer_t* tokenizer) {
 	int size = 0;
 
 	bool is_closed = false;
+	token->line_no = tokenizer->line_no;
 
 	while (true) {
 		const char c = input[tokenizer->pos];
@@ -193,6 +199,8 @@ token_t* read_single_line_comment(tokenizer_t* tokenizer) {
 	char* string = calloc(0, sizeof(char));
 	int size = 0;
 
+	token->line_no = tokenizer->line_no;
+
 	while (true) {
 		const char c = input[tokenizer->pos];
 		if (c != '\n' && has_at_least(tokenizer, 0)) {
@@ -217,7 +225,12 @@ token_t* read_multi_line_comment(tokenizer_t* tokenizer) {
 	char* string = calloc(0, sizeof(char));
 	int size = 0;
 
+	token->line_no = tokenizer->line_no;
 	while (true) {
+		if (starts_with(input, "\n", tokenizer->pos)) {
+			tokenizer->line_no++;
+		}
+
 		if (!starts_with(input, "*/", tokenizer->pos) && has_at_least(tokenizer, 0)) {
 			string = realloc(string, ++size);
 			string[size-1] = input[tokenizer->pos++];
@@ -238,6 +251,8 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 	token_t* token = malloc(sizeof(token_t));
 	char* input = tokenizer->input;
 	const char c = input[tokenizer->pos];
+
+	token->line_no = tokenizer->line_no;
 
 	switch(c) {
 		case '!':
@@ -321,6 +336,8 @@ token_t* next_token(tokenizer_t* tokenizer) {
 	token_t* token = malloc(sizeof(token_t));
 	const char c = tokenizer->input[tokenizer->pos];
 
+	token->line_no = tokenizer->line_no;
+
 	switch(c) {
 		case '\'':
 			free(token);
@@ -328,6 +345,9 @@ token_t* next_token(tokenizer_t* tokenizer) {
 		case '\"':
 			free(token);
 			return read_string(tokenizer);
+		case '\n':
+			tokenizer->line_no++;
+			break;
 
 		case '+':
 			token->type = ADD;
@@ -406,6 +426,7 @@ vec_t tokenize(const char* input) {
 	tokenizer_t* tokenizer = malloc(sizeof(struct tokenizer_t));
 	tokenizer->input = strdup(input);
 	tokenizer->pos = 0;
+	tokenizer->line_no = 1;
 
 	vec_t tokens;
 	vec_init(&tokens, 1);
