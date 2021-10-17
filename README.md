@@ -3,13 +3,13 @@ Compiler and tools for the Little programming language.
 
 ## Examples
 ### Hello World
-```
+```rs
 fn main() : void {
   (print "Hello, World!\n")
 }
 ```
 ### Add Two Numbers
-```
+```rs
 fn add(int a, int b) : int {
   (return (+ a b))
 }
