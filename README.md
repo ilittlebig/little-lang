@@ -25,7 +25,7 @@ To build the `Little` compiler, simply run:
 ```
 make
 ```
-This will generate a binary file in the `bin` directory called `little`.
+> Note: This will generate a binary file in the `bin` directory called `little`.
 ### Testing
 The test cases can be run with the `--tests` flag:
 ```
@@ -37,7 +37,7 @@ To compile a file, use the generated binary from the build step:
 ```
 bin/little test_file.lil
 ```
-This will generate another binary in the `bin` directory called `a`.
+> Note: This will generate another binary in the `bin` directory called `a`.
 
 ## Features
 - [x] Addition (+)
