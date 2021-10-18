@@ -399,29 +399,6 @@ token_t* next_token(tokenizer_t* tokenizer) {
 		case '\n':
 			tokenizer->line_no++;
 			break;
-
-		/*
-		case '+':
-			token->type = ADD;
-			break;
-		case '-':
-			if (isdigit(tokenizer->input[tokenizer->pos + 1])) {
-				free(token);
-				return read_digit(tokenizer);
-			}
-			token->type = SUB;
-			break;
-		case '*':
-			token->type = MUL;
-			break;
-		case '%':
-			token->type = MOD;
-			break;
-		case '^':
-			token->type = POW;
-			break;
-		*/
-
 		case '(':
 			token->type = LEFT_PAREN;
 			break;

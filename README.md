@@ -19,13 +19,32 @@ fn main() : void {
   (printi sum)
 }
 ```
+## Installing & Running
+### Building
+To build the `Little` compiler, simply run:
+```
+make
+```
+This will generate a binary file in the `bin` directory called `little`.
+### Testing
+The test cases can be run with the `--tests` flag:
+```
+bin/little --tests
+```
+> Note: They do not they all possible cases, but most of them are covered.
+### Compiling
+To compile a file, use the generated binary from the build step:
+```
+bin/little test_file.lil
+```
+This will generate another binary in the `bin` directory called `a`.
 
 ## Features
 - [x] Addition (+)
 - [x] Subtraction (-)
 - [x] Multiplication (*)
 - [x] Division (/)
-- [x] Mod (%)
+- [x] Modulus (%)
 - [x] Conditions
 - [x] Function Definitions
 - [x] Function Calls

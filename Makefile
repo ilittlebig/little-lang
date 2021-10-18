@@ -1,4 +1,4 @@
-TARGET_EXEC ?= parser
+TARGET_EXEC ?= little
 
 BIN_DIR ?= ./bin
 LIB_DIR ?= ./lib
