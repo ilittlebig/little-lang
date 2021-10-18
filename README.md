@@ -19,7 +19,7 @@ fn main() : void {
   (printi sum)
 }
 ```
-## Installing & Running
+## Building, Testing & Compiling
 ### Building
 To build the `Little` compiler, simply run:
 ```
