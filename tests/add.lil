@@ -1,0 +1,16 @@
+fn main() : void {
+	int : (= a (+ 10 10))
+	int : (= b (+ 500 500))
+	int : (= c (+ (+ 10 20) 10))
+	int : (= d (+ (+ 10 20) (+ 20 10)))
+
+	(printi a)
+	(printi b)
+	(printi c)
+	(printi d)
+
+	(printi (+ 10 10))
+	(printi (+ 500 500))
+	(printi (+ (+ 10 20) 10))
+	(printi (+ (+ 10 20) (+ 20 10)))
+}

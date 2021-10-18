@@ -2,6 +2,7 @@
 #include "file.h"
 #include "error.h"
 #include "typer.h"
+#include "tests.h"
 #include "parser.h"
 
 static void compile_little(char* path) {
@@ -23,12 +24,16 @@ static void compile_little(char* path) {
 
 int main(int argc, char* argv[]) {
 	char* path = argv[1];
+
 	if (!path) {
 		fatal_error("no input files");
 		printf("compilation terminated\n");
 		return 1;
+	} else if (strcmp(path, "--tests") == 0) {
+		run_tests();
+	} else {
+		compile_little(path);
 	}
 
-	compile_little(path);
 	return 0;
 }

@@ -5,12 +5,12 @@
 
 typedef enum node_kind_t {
 	ND_NULL_EXPR,     // Nothing
-	ND_EQUAL,	      // ==
-	ND_NOT_EQUAL,	  // !=
+	ND_EQ,			  // ==
+	ND_NOT_EQ,		  // !=
 	ND_LESS,		  // <
-	ND_LESS_EQUAL,    // <=
+	ND_LESS_EQ,		  // <=
 	ND_GREATER,		  // >
-	ND_GREATER_EQUAL, // >=
+	ND_GREATER_EQ,	  // >=
 	ND_ASSIGN,	      // =
 	ND_RETURN,	      // 'return'
 	ND_DEFVAR,        // 'defvar'

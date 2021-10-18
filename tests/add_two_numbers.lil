@@ -1,0 +1,8 @@
+fn add(int a, int b) : int {
+	(return (+ a b))
+}
+
+fn main() : void {
+	(defvar sum (add 500 750))
+	(printi sum)
+}

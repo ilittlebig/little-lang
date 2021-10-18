@@ -1,0 +1,9 @@
+fn foo(int a, string b, int c) : void {
+	(printi a)
+	(print b)
+	(printi c)
+}
+
+fn main() : void {
+	(foo 10 "Hello, World!\n" 1234)
+}

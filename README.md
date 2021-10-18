@@ -35,6 +35,7 @@ fn main() : void {
 - [ ] Structs
 - [ ] Enums
 - [ ] Arrays
+- [ ] Scopes
 - [x] If Statements
 - [x] For-Loops
 - [x] While-Loops

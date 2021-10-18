@@ -84,10 +84,10 @@ char* token_to_str(token_type_t token_type) {
 		case VOID:					  return "VOID";
 		case NUMBER:				  return "NUMBER";
 		case IDENTIFIER:			  return "IDENTIFIER";
-		case GREATER_OR_EQUAL:		  return "GREATER_OR_EQUAL";
-		case EQUAL:					  return "EQUAL";
-		case LESS_OR_EQUAL:			  return "LESS_OR_EQUAL";
-		case NOT_EQUAL:				  return "NOT_EQUAL";
+		case GREATER_EQ:			  return "GREATER_EQ";
+		case EQ:					  return "EQ";
+		case LESS_EQ:				  return "LESS_EQ";
+		case NOT_EQ:				  return "NOT_EQ";
 		case LEFT_PAREN:			  return "LEFT_PAREN";
 		case RIGHT_PAREN:			  return "RIGHT_PAREN";
 		case LEFT_BRACKET:			  return "LEFT_BRACKET";
@@ -255,10 +255,61 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 	token->line_no = tokenizer->line_no;
 
 	switch(c) {
+		case '+':
+			if (starts_with(input, "+=", tokenizer->pos)) {
+				tokenizer->pos += 2;
+				token->type = ADD_ASSIGN;
+			} else {
+				tokenizer->pos++;
+				token->type = ADD;
+			}
+			break;
+		case '-':
+			if (starts_with(input, "-=", tokenizer->pos)) {
+				tokenizer->pos += 2;
+				token->type = SUB_ASSIGN;
+			} else {
+				// In case the number is a negative number.
+				if (isdigit(tokenizer->input[tokenizer->pos + 1])) {
+					free(token);
+					return read_digit(tokenizer);
+				}
+
+				tokenizer->pos++;
+				token->type = SUB;
+			}
+			break;
+		case '*':
+			if (starts_with(input, "*=", tokenizer->pos)) {
+				tokenizer->pos += 2;
+				token->type = MUL_ASSIGN;
+			} else {
+				tokenizer->pos++;
+				token->type = MUL;
+			}
+			break;
+		case '%':
+			if (starts_with(input, "%=", tokenizer->pos)) {
+				tokenizer->pos += 2;
+				token->type = MOD_ASSIGN;
+			} else {
+				tokenizer->pos++;
+				token->type = MOD;
+			}
+			break;
+		case '^':
+			if (starts_with(input, "^=", tokenizer->pos)) {
+				tokenizer->pos += 2;
+				token->type = POW_ASSIGN;
+			} else {
+				tokenizer->pos++;
+				token->type = POW;
+			}
+			break;
 		case '!':
 			if (starts_with(input, "!=", tokenizer->pos)) {
 				tokenizer->pos += 2;
-				token->type = NOT_EQUAL;
+				token->type = NOT_EQ;
 			} else {
 				tokenizer->pos++;
 				token->type = NOT;
@@ -267,7 +318,7 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 		case '>':
 			if (starts_with(input, ">=", tokenizer->pos)) {
 				tokenizer->pos += 2;
-				token->type = GREATER_OR_EQUAL;
+				token->type = GREATER_EQ;
 			} else {
 				tokenizer->pos++;
 				token->type = GREATER;
@@ -276,7 +327,7 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 		case '=':
 			if (starts_with(input, "==", tokenizer->pos)) {
 				tokenizer->pos += 2;
-				token->type = EQUAL;
+				token->type = EQ;
 			} else {
 				tokenizer->pos++;
 				token->type = ASSIGN;
@@ -285,7 +336,7 @@ token_t* read_other_tokens(tokenizer_t* tokenizer) {
 		case '<':
 			if (starts_with(input, "<=", tokenizer->pos)) {
 				tokenizer->pos += 2;
-				token->type = LESS_OR_EQUAL;
+				token->type = LESS_EQ;
 			} else {
 				tokenizer->pos++;
 				token->type = LESS;
@@ -349,6 +400,7 @@ token_t* next_token(tokenizer_t* tokenizer) {
 			tokenizer->line_no++;
 			break;
 
+		/*
 		case '+':
 			token->type = ADD;
 			break;
@@ -368,6 +420,7 @@ token_t* next_token(tokenizer_t* tokenizer) {
 		case '^':
 			token->type = POW;
 			break;
+		*/
 
 		case '(':
 			token->type = LEFT_PAREN;

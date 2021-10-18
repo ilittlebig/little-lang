@@ -1,0 +1,10 @@
+fn main() : void {
+	for (int : (= a 0); (< a 10); (= a (+ a 1))) {
+		(printi a)
+	}
+
+	int : (= b 0)
+	for (b; (< b 10); (= b (+ b 1))) {
+		(printi b)
+	}
+}

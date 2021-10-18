@@ -71,8 +71,9 @@ static int is_typename(token_t* token) {
 	return 0;
 }
 
-/* Increment a static counter and return a formatted
-   string that is used to define string literals in assembly. */
+/* Increment a static counter. Returns a formatted
+   string that is used to define string literals in the
+   assembler. */
 
 static char* make_label() {
 	static int c = 0;
@@ -81,7 +82,7 @@ static char* make_label() {
 	return buff;
 }
 
-/* Return a pointer to a variable. Functions will be also be
+/* Returns a pointer to a variable. Functions will be also be
    returned but as a global variable. */
 
 static obj_t* find_var(char* name) {
@@ -292,7 +293,8 @@ static node_t* stmt(parser_t* parser) {
 			error_at(fn->token, "called object '%s' is not a function", fn->var->name);
 		}
 
-		// TODO: Fix infinite looping when you omit the 'RIGHT_PAREN' token.
+		// TODO: Fix infinite looping when you omit the
+		// 'RIGHT_PAREN' token.
 		while (peek(parser)->type != RIGHT_PAREN) {
 			node_t* arg = assign(parser);
 			cur = cur->next = arg;
@@ -414,6 +416,7 @@ static node_t* add(parser_t* parser) {
 
 		node = equality(parser);
 		node = new_binary(ND_ADD, node, assign(parser), peek(parser));
+		node->type = INT;
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -423,6 +426,7 @@ static node_t* add(parser_t* parser) {
 
 		node = equality(parser);
 		node = new_binary(ND_SUB, node, assign(parser), peek(parser));
+		node->type = INT;
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -445,6 +449,7 @@ static node_t* mul(parser_t* parser) {
 
 		node = equality(parser);
 		node = new_binary(ND_MUL, node, assign(parser), peek(parser));
+		node->type = INT;
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -454,6 +459,7 @@ static node_t* mul(parser_t* parser) {
 
 		node = equality(parser);
 		node = new_binary(ND_DIV, node, assign(parser), peek(parser));
+		node->type = INT;
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -463,6 +469,7 @@ static node_t* mul(parser_t* parser) {
 
 		node = equality(parser);
 		node = new_binary(ND_MOD, node, assign(parser), peek(parser));
+		node->type = INT;
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -488,12 +495,12 @@ static node_t* relational(parser_t* parser) {
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
-	} else if (peek2(parser)->type == LESS_OR_EQUAL) { // <=
+	} else if (peek2(parser)->type == LESS_EQ) { // <=
 		consume_type(parser, LEFT_PAREN);
-		consume_type(parser, LESS_OR_EQUAL);
+		consume_type(parser, LESS_EQ);
 
 		node = equality(parser);
-		node = new_binary(ND_LESS_EQUAL, node, assign(parser), peek(parser));
+		node = new_binary(ND_LESS_EQ, node, assign(parser), peek(parser));
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -506,12 +513,12 @@ static node_t* relational(parser_t* parser) {
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
-	} else if (peek2(parser)->type == GREATER_OR_EQUAL) { // >=
+	} else if (peek2(parser)->type == GREATER_EQ) { // >=
 		consume_type(parser, LEFT_PAREN);
-		consume_type(parser, GREATER_OR_EQUAL);
+		consume_type(parser, GREATER_EQ);
 
 		node = equality(parser);
-		node = new_binary(ND_GREATER_EQUAL, node, assign(parser), peek(parser));
+		node = new_binary(ND_GREATER_EQ, node, assign(parser), peek(parser));
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
@@ -528,21 +535,21 @@ static node_t* relational(parser_t* parser) {
 static node_t* equality(parser_t* parser) {
 	node_t* node;
 
-	if (peek2(parser)->type == EQUAL) { // ==
+	if (peek2(parser)->type == EQ) { // ==
 		consume_type(parser, LEFT_PAREN);
-		consume_type(parser, EQUAL);
+		consume_type(parser, EQ);
 
 		node = equality(parser);
-		node = new_binary(ND_EQUAL, node, assign(parser), peek(parser));
+		node = new_binary(ND_EQ, node, assign(parser), peek(parser));
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;
-	} else if (peek2(parser)->type == NOT_EQUAL) { // !=
+	} else if (peek2(parser)->type == NOT_EQ) { // !=
 		consume_type(parser, LEFT_PAREN);
-		consume_type(parser, NOT_EQUAL);
+		consume_type(parser, NOT_EQ);
 
 		node = equality(parser);
-		node = new_binary(ND_NOT_EQUAL, node, assign(parser), peek(parser));
+		node = new_binary(ND_NOT_EQ, node, assign(parser), peek(parser));
 
 		consume_type(parser, RIGHT_PAREN);
 		return node;

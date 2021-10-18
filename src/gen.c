@@ -2,10 +2,15 @@
 
 #include "gen.h"
 
+/* Increment a static counter. Returns integer that is used
+   for if-statements and loops. */
+
 static int count() {
 	static int c = 0;
 	return c++;
 }
+
+/* Writes string to the output file descriptor. */
 
 static void emit(char* fmt, ...) {
 	va_list args;
@@ -57,18 +62,29 @@ static int push_args(node_t* node) {
 	return args;
 }
 
+/* Use a specific conditional jump depending on
+   the type of the condition.
+
+   conditional-jumps:
+	   jne: ==
+       je: !=
+       jng: <
+       jnge: <=
+       jnl: >
+       jnle: >= */
+
 static void emit_cond_jmp(node_t* node, char* section, int c) {
-	if (node->kind == ND_EQUAL) {
+	if (node->kind == ND_EQ) {
 		emit("	jne .L.%s.%d", section, c);
-	} else if (node->kind == ND_NOT_EQUAL) {
+	} else if (node->kind == ND_NOT_EQ) {
 		emit("	je .L.%s.%d", section, c);
 	} else if (node->kind == ND_LESS) {
 		emit("	jng .L.%s.%d", section, c);
-	} else if (node->kind == ND_LESS_EQUAL) {
+	} else if (node->kind == ND_LESS_EQ) {
 		emit("	jnge .L.%s.%d", section, c);
 	} else if (node->kind == ND_GREATER) {
 		emit("	jnl .L.%s.%d", section, c);
-	} else if (node->kind == ND_GREATER_EQUAL) {
+	} else if (node->kind == ND_GREATER_EQ) {
 		emit("	jnle .L.%s.%d", section, c);
 	}
 }
@@ -188,14 +204,14 @@ static void emit_expr(node_t* node) {
 				case ND_MOD:
 					emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
 					break;
-				case ND_EQUAL:
-				case ND_NOT_EQUAL:
+				case ND_EQ:
+				case ND_NOT_EQ:
 					emit("	mov %%al, %d(%%ebp)", node->lhs->var->offset);
 					break;
 				case ND_LESS:
-				case ND_LESS_EQUAL:
+				case ND_LESS_EQ:
 				case ND_GREATER:
-				case ND_GREATER_EQUAL:
+				case ND_GREATER_EQ:
 					emit("	movzbl %%al, %%eax");
 					emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
 					break;
@@ -211,15 +227,15 @@ static void emit_expr(node_t* node) {
 		case ND_MUL:
 		case ND_DIV:
 		case ND_MOD:
-			emit_expr(node->rhs);
-			emit_expr(node->lhs);
-
 			switch(node->rhs->kind) {
 				case ND_NUM:
 					emit("	pushl $%s", node->rhs->val);
 					break;
 				case ND_VAR:
 					emit("	pushl %d(%%ebp)", node->rhs->var->offset);
+					break;
+				default:
+					emit_expr(node->rhs);
 					break;
 			}
 			emit("	movl (%%esp), %%ecx");
@@ -230,6 +246,9 @@ static void emit_expr(node_t* node) {
 					break;
 				case ND_VAR:
 					emit("	pushl %d(%%ebp)", node->lhs->var->offset);
+					break;
+				default:
+					emit_expr(node->lhs);
 					break;
 			}
 			emit("	movl (%%esp), %%ecx");
@@ -255,12 +274,12 @@ static void emit_expr(node_t* node) {
 			emit("	movl (%%esp), %%ecx");
 
 			break;
-		case ND_EQUAL:
-		case ND_NOT_EQUAL:
+		case ND_EQ:
+		case ND_NOT_EQ:
 		case ND_LESS:
-		case ND_LESS_EQUAL:
+		case ND_LESS_EQ:
 		case ND_GREATER:
-		case ND_GREATER_EQUAL:
+		case ND_GREATER_EQ:
 			switch(node->lhs->kind) {
 				case ND_NUM:
 					emit("	movl $%s, %%eax", node->lhs->val);
@@ -286,23 +305,26 @@ static void emit_expr(node_t* node) {
 			}
 			emit("	cmpl %%eax, %%edi");
 
-			if (node->kind == ND_EQUAL) {
+			if (node->kind == ND_EQ) {
 				emit("	sete %%al");
-			} else if (node->kind == ND_NOT_EQUAL) {
+			} else if (node->kind == ND_NOT_EQ) {
 				emit("	setne %%al");
 			} else if (node->kind == ND_LESS) {
 				emit("	setg %%al");
-			} else if (node->kind == ND_LESS_EQUAL) {
+			} else if (node->kind == ND_LESS_EQ) {
 				emit("	setge %%al");
 			} else if (node->kind == ND_GREATER) {
 				emit("	setl %%al");
-			} else if (node->kind == ND_GREATER_EQUAL) {
+			} else if (node->kind == ND_GREATER_EQ) {
 				emit("	setle %%al");
 			}
 			break;
 	}
 	return;
 }
+
+/* Assigns an offset to local variables including function
+   parameters. */
 
 static void assign_lvar_offsets(obj_t* fn) {
 	int stack_size = 0;

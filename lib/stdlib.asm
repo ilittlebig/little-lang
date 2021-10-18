@@ -1,3 +1,6 @@
+.section .data
+MINUS:
+	.string "-"
 .section .text
 print:
 	pushl %ebp
@@ -15,6 +18,16 @@ printi:
 	pushl %ebp
 	movl %esp, %ebp
 	movl 8(%ebp), %eax
+	cmpl $0, %eax
+	jge printi_loop
+	neg %eax
+	pushl %eax
+	movl $4, %eax
+	movl $1, %ebx
+	movl $1, %edx
+	movl $MINUS, %ecx
+	int $0x80
+	popl %eax
 	call printi_loop
 printi_loop:
 	movl $0, %edx

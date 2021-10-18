@@ -4,6 +4,7 @@
 #include "error.h"
 
 int has_error = 0;
+// TODO: Show error with filename and location.
 void error_at(token_t* token, char* message, ...) {
 	printf("\033[1;37m");
 	printf("examples/main.lil:%d: ", token->line_no);
@@ -40,6 +41,7 @@ void fatal_error(char* message, ...) {
 	has_error = 1;
 }
 
+// TODO: Show error with filename and location.
 void warning_at(token_t* token, char* message, ...) {
 	printf("\033[1;37m");
 	printf("examples/main.lil:%d: ", token->line_no);

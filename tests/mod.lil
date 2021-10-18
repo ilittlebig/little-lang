@@ -1,0 +1,22 @@
+fn main() : void {
+	int : (= a (% 100 50))
+	int : (= b (% 100 200))
+	int : (= c (% 10 2))
+	int : (= d (% 10 3))
+	int : (= e (% 10 4))
+	int : (= f (% 10 5))
+
+	(printi a)
+	(printi b)
+	(printi c)
+	(printi d)
+	(printi e)
+	(printi f)
+
+	(printi (% 100 50))
+	(printi (% 100 200))
+	(printi (% 10 2))
+	(printi (% 10 3))
+	(printi (% 10 4))
+	(printi (% 10 5))
+}

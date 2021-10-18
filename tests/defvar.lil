@@ -1,0 +1,17 @@
+fn add(int a, int b) : int {
+	int : (= sum (+ a b))
+	(return sum)
+}
+
+fn foo() : string {
+	(return "Hello, World!\n")
+}
+
+fn main() : void {
+	(defvar str (foo))
+	(print str)
+	(defvar len (strlen str))
+	(printi len)
+	(defvar sum (add 5 10))
+	(printi sum)
+}

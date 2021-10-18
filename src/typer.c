@@ -44,7 +44,7 @@ static void match_function_arguments(obj_t* fn, node_t* var) {
    the return type and the function type mismatches. */
 
 void match_function_return_buffer(node_t* return_buffer, obj_t* fn) {
-	token_type_t return_type = return_buffer->var ? return_buffer->var->type : return_buffer->token->type;
+	token_type_t return_type = return_buffer->var ? return_buffer->var->type : return_buffer->type;
 	if (fn->func_type == VOID && (return_buffer->var || return_buffer->val)) {
 		warning_at(return_buffer->token, "'return' with a value, in function returning void");
 	}
@@ -69,10 +69,22 @@ void match_arithmetic_operators(node_t* op) {
 			match_arithmetic_operators(op->lhs);
 			match_arithmetic_operators(op->rhs);
 
-			if (!match_types(INT, op->lhs->token->type) || !match_types(INT, op->rhs->token->type)) {
+			token_type_t left_type =
+				op->lhs->var ? op->lhs->var->type : op->lhs->token->type,
+				right_type = op->rhs->var ? op->rhs->var->type : op->rhs->token->type;
+
+			if (left_type == NUMBER && right_type == LEFT_PAREN) {
+				break;
+			} else if (left_type == LEFT_PAREN && right_type == NUMBER) {
+				break;
+			} else if (left_type == LEFT_PAREN && right_type == LEFT_PAREN) {
+				break;
+			}
+
+			if (!match_types(INT, left_type) || !match_types(INT, right_type)) {
 				warning_at(op->lhs->token,
 					"unsupported operand type(s) '%s' and '%s'",
-					token_to_str(op->lhs->token->type), token_to_str(op->rhs->token->type));
+					token_to_str(left_type), token_to_str(right_type));
 			}
 			break;
 		default:

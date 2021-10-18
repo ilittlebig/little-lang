@@ -44,15 +44,28 @@ char* read_file(const char* filename) {
 	return buff;
 }
 
-void write_command(const char* command) {
+/* Executes the specified command. Returns program output if a
+   program was run. */
+
+char* write_command(const char* command) {
 	FILE* file;
 
 	file = popen(command, "r");
 	if (!file) {
 		printf("Failed to run command '%s'\n", command);
-		return;
+		exit(1);
+	}
+	fprintf(file, command);
+
+	char* output = calloc(1, sizeof(char));
+	output[0] = '\0';
+
+	char buff[2048];
+	while (fgets(buff, sizeof(buff), file)) {
+		output = realloc(output, strlen(output) + strlen(buff) + 1);
+		strcat(output, buff);
 	}
 
-	fprintf(file, command);
-	fclose(file);
+	pclose(file);
+	return output;
 }

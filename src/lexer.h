@@ -28,10 +28,10 @@ typedef enum token_type_t {
 	NUMBER,
 	IDENTIFIER,
 
-	GREATER_OR_EQUAL,
-	EQUAL,
-	LESS_OR_EQUAL,
-	NOT_EQUAL,
+	GREATER_EQ,
+	EQ,
+	LESS_EQ,
+	NOT_EQ,
 
 	LEFT_PAREN,
 	RIGHT_PAREN,
@@ -46,6 +46,14 @@ typedef enum token_type_t {
 	DIV,
 	MOD,
 	POW,
+
+	// TODO: Not implemented in the parser yet.
+	ADD_ASSIGN,
+	SUB_ASSIGN,
+	MUL_ASSIGN,
+	DIV_ASSIGN,
+	MOD_ASSIGN,
+	POW_ASSIGN,
 
 	ASSIGN,
 	LESS,
