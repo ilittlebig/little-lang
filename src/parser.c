@@ -338,6 +338,58 @@ static node_t* compound_stmt(parser_t* parser) {
 	return node;
 }
 
+/* Parse array dimension. The dimension is as of now
+   not optional and must be specified as an integer or
+   a variable. */
+
+static node_t* read_array_dimensions(parser_t* parser) {
+	consume_type(parser, LEFT_BRACKET);
+	token_t* token = peek(parser);
+
+	node_t* node = NULL;
+	if (token->type == NUMBER) {
+		node = read_number(parser);
+	} else if (token->type == IDENTIFIER) {
+		node = read_var(parser);
+	}
+
+	consume_type(parser, RIGHT_BRACKET);
+	return node;
+}
+
+/* Parse an array initializer. The initializer must be
+   specified.
+
+   array-declaration:
+       type-specifier declarator-and-initializer */
+
+static node_t* read_array_initializer(parser_t* parser) {
+	node_t head = {};
+	node_t* cur = &head;
+
+	consume_type(parser, LEFT_PAREN);
+
+	// TODO: Fix infinite looping when you omit the
+	// 'RIGHT_PAREN' token.
+	token_t* token = peek(parser);
+	while (peek(parser)->type != RIGHT_PAREN) {
+		node_t* elem = equality(parser);
+
+		token_type_t type = elem->var ? elem->var->type : elem->token->type;
+		obj_t* var = new_lvar(elem->var ? elem->var->name : "", elem->token->type);
+		var->init_data = elem->var ? elem->var->init_data : NULL;
+		elem->var = var;
+
+		cur = cur->next = elem;
+	}
+
+	consume_type(parser, RIGHT_PAREN);
+
+	node_t* node = new_node(ND_ARRAY, token);
+	node->children = head.next;
+	return node;
+}
+
 /* Parse a variable. Returns a pointer to a valid variable
    except in the case of an undeclared variable in which case
    an error is thrown and NULL is returned. */
@@ -350,6 +402,13 @@ static node_t* read_var(parser_t* parser) {
 	if (var) {
 		node_t* node = new_node(ND_VAR, token);
 		node->var = var;
+
+		if (peek(parser)->type == LEFT_BRACKET) {
+			node_t* size = read_array_dimensions(parser);
+			node->array_len = size;
+			node->var->is_array = true;
+		}
+
 		return node;
 	}
 
@@ -398,7 +457,9 @@ static node_t* expr(parser_t* parser) {
 		case IDENTIFIER:	 return read_var(parser);
 		case NUMBER:		 return read_number(parser);
 		case STRING_LITERAL: return read_string(parser);
+		case LEFT_PAREN:     return read_array_initializer(parser);
 		default:
+			consume(parser);
 			error_at(token, "expected expression before '%s' token", token_to_str(token->type));
 	}
 	return NULL;
@@ -580,9 +641,14 @@ static node_t* assign(parser_t* parser) {
 			consume_type(parser, ASSIGN);
 
 			node_t* var = read_var(parser);
+			if (peek(parser)->type == LEFT_BRACKET) {
+				node_t* size = read_array_dimensions(parser);
+				var->array_len = size;
+				var->var->is_array = true;
+			}
+
 			node_t* rhs = assign(parser);
 			node_t* node = new_binary(ND_ASSIGN, var, rhs, token);
-
 			if (has_error && !rhs) {
 				skip_until_next_brace(parser);
 			} else {
@@ -611,7 +677,14 @@ static void func_params(parser_t* parser) {
 		char* name = peek(parser)->value;
 		consume_type(parser, IDENTIFIER);
 
-		new_lvar(name, type);
+		obj_t* var = new_lvar(name, type);
+		var->is_param = true;
+
+		if (peek(parser)->type == LEFT_BRACKET) {
+			node_t* size = read_array_dimensions(parser);
+			var->is_array = true;
+		}
+
 		if (peek(parser)->type != RIGHT_PAREN) {
 			consume_type(parser, COMMA);
 		}

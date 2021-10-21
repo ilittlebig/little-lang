@@ -34,7 +34,42 @@ static void push_args2(node_t* node) {
 				emit("	pushl $%s", node->var->name);
 				break;
 			}
-			emit("	pushl %d(%%ebp)", node->var->offset);
+			if (node->array_len) {
+				switch (node->array_len->kind) {
+					case ND_NUM:
+						if (node->var->is_param) {
+							emit("	movl %d(%%ebp), %%eax", node->var->offset);
+							emit("	addl $%d, %%eax", strtoul(node->array_len->val, NULL, 10) * 4);
+							emit("	movl (%%eax), %%eax");
+						} else {
+							emit("	movl $%s, %%eax", node->array_len->val, node->var->offset + 4);
+							emit("	movl %d(%%ebp, %%eax, 4), %%eax", node->var->offset + 4);
+						}
+						break;
+					case ND_VAR:
+						if (node->var->is_param) {
+							emit("	movl %d(%%ebp), %%eax", node->var->offset);
+							emit("	movl %d(%%ebp), %%ecx", node->array_len->var->offset);
+							emit("	imul $4, %%ecx");
+							emit("	addl %%ecx, %%eax");
+							emit("	movl (%%eax), %%eax");
+						} else {
+							emit("	movl %d(%%ebp), %%eax", node->array_len->var->offset);
+							emit("	movl %d(%%ebp, %%eax, 4), %%eax", node->var->offset + 4);
+						}
+						break;
+					default:
+						break;
+				}
+				emit("	pushl %%eax");
+			} else if (node->var->is_array) {
+				emit("	leal %d(%%ebp), %%eax", node->var->offset + 4);
+				emit("	movl %%eax, %%edi");
+				emit("	pushl %%eax");
+			} else {
+				emit("	pushl %d(%%ebp)", node->var->offset);
+			}
+
 			break;
 		case ND_ADD:
 		case ND_SUB:
@@ -120,7 +155,36 @@ static void emit_stmt(node_t* node) {
 						emit("	movl $%s, %%eax", node->lhs->var->name);
 						break;
 					}
-					emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+					if (node->lhs->array_len) {
+						switch (node->lhs->array_len->kind) {
+							case ND_NUM:
+								if (node->lhs->var->is_param) {
+									emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+									emit("	addl $%d, %%eax", strtoul(node->lhs->array_len->val, NULL, 10) * 4);
+									emit("	movl (%%eax), %%eax");
+								} else {
+									emit("	movl $%s, %%eax", node->lhs->array_len->val, node->lhs->var->offset + 4);
+									emit("	movl %d(%%ebp, %%eax, 4), %%eax", node->lhs->var->offset + 4);
+								}
+								break;
+							case ND_VAR:
+								if (node->lhs->var->is_param) {
+									emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+									emit("	movl %d(%%ebp), %%ecx", node->lhs->array_len->var->offset);
+									emit("	imul $4, %%ecx");
+									emit("	addl %%ecx, %%eax");
+									emit("	movl (%%eax), %%eax");
+								} else {
+									emit("	movl %d(%%ebp), %%eax", node->lhs->array_len->var->offset);
+									emit("	movl %d(%%ebp, %%eax, 4), %%eax", node->lhs->var->offset + 4);
+								}
+								break;
+							default:
+								break;
+						}
+					} else {
+						emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+					}
 					break;
 				default:
 					emit_expr(node->lhs);
@@ -172,22 +236,146 @@ static void emit_stmt(node_t* node) {
 	}
 }
 
+static void emit_array_elem(node_t* node) {
+	if (node->lhs->var->is_param) {
+		emit("	leal 0(, %%eax, 4), %%edx");
+		emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+
+		if (node->lhs->array_len->var) {
+			emit("	movl %d(%%ebp), %%ecx", node->lhs->array_len->var->offset);
+		} else {
+			emit("	movl $%s, %%ecx", node->lhs->array_len->val);
+		}
+		emit("	imul $4, %%ecx");
+
+		emit("	addl %%ecx, %%eax");
+		if (node->rhs->var->init_data) {
+			emit("	movl $%s, %%ecx", node->rhs->var->name);
+			emit("	movl %%ecx, (%%eax)");
+		} else {
+			emit("	movl %d(%%ebp), %%ecx", node->rhs->var->offset);
+			emit("	movl %%ecx, (%%eax)");
+		}
+	} else if (node->rhs->var->is_param) {
+		emit("	movl %d(%%ebp), %%eax", node->rhs->var->offset);
+		if (node->rhs->array_len->var) {
+			emit("	movl %d(%%ebp), %%ecx", node->rhs->array_len->var->offset);
+		} else {
+			emit("	movl $%s, %%ecx", node->rhs->array_len->val);
+		}
+		emit("	imul $4, %%ecx");
+
+		emit("	addl %%ecx, %%eax");
+		emit("	movl (%%eax), %%eax");
+		emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
+	} else {
+		if (node->rhs->array_len) {
+			emit("	movl %d(%%ebp, %%eax, 4), %%ecx", node->rhs->var->offset + 4);
+			emit("	movl %%ecx, %d(%%ebp)", node->lhs->var->offset);
+		} else if (node->rhs->var->init_data) {
+			emit("	movl $%s, %%ecx", node->rhs->var->name);
+			emit("	movl %%ecx, %d(%%ebp, %%eax, 4)", node->lhs->var->offset + 4);
+		} else {
+			emit("	movl %d(%%ebp), %%ecx", node->rhs->var->offset);
+			emit("	movl %%ecx, %d(%%ebp, %%eax, 4)", node->lhs->var->offset + 4);
+		}
+	}
+}
+
+static void emit_array(node_t* node) {
+	for (node_t* child = node->children; child; child = child->next) {
+		switch (child->kind) {
+			case ND_NUM:
+				emit("	movl $%s, %d(%%ebp)", child->val, child->var->offset);
+				break;
+			case ND_VAR:
+				if (child->var->init_data) {
+					emit("	movl $%s, %d(%%ebp)", child->var->name, child->var->offset);
+				}
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 static void emit_expr(node_t* node) {
 	switch(node->kind) {
 		case ND_NULL_EXPR:
 			break;
 		case ND_ASSIGN:
-			switch(node->rhs->kind) {
+			if (node->lhs->array_len) {
+				switch (node->lhs->array_len->kind) {
+					case ND_NUM:
+						if (node->lhs->var->is_param) {
+							emit("	movl $%s, %%ecx", node->lhs->array_len->val);
+						} else {
+							emit("	movl $%s, %%eax", node->lhs->array_len->val);
+						}
+						break;
+					case ND_VAR:
+						if (node->lhs->var->is_param) {
+							emit("	movl %d(%%ebp), %%ecx", node->lhs->array_len->var->offset);
+						} else {
+							emit("	movl %d(%%ebp), %%eax", node->lhs->array_len->var->offset);
+						}
+						break;
+					default:
+						break;
+				}
+			} else if (node->rhs->array_len) {
+				switch (node->rhs->array_len->kind) {
+					case ND_NUM:
+						if (node->rhs->var->is_param) {
+							emit("	movl $%s, %%ecx", node->rhs->array_len->val);
+						} else {
+							emit("	movl $%s, %%eax", node->rhs->array_len->val);
+						}
+						break;
+					case ND_VAR:
+						if (node->rhs->var->is_param) {
+							emit("	movl %d(%%ebp), %%ecx", node->rhs->array_len->var->offset);
+						} else {
+							emit("	movl %d(%%ebp), %%eax", node->rhs->array_len->var->offset);
+						}
+						break;
+					default:
+						break;
+				}
+			}
+
+			switch (node->rhs->kind) {
 				case ND_NUM:
-					emit("	movl $%s, %d(%%ebp)", node->rhs->val, node->lhs->var->offset);
+					if (node->lhs->array_len) {
+						if (node->lhs->var->is_param) {
+							emit("	movl %d(%%ebp), %%eax", node->lhs->var->offset);
+							if (node->lhs->array_len->var) {
+								emit("	movl %d(%%ebp), %%ecx", node->lhs->array_len->var->offset);
+							} else {
+								emit("	movl $%s, %%ecx", node->lhs->array_len->val);
+							}
+							emit("	imul $4, %%ecx");
+							emit("	addl %%ecx, %%eax");
+							emit("	movl $%s, (%%eax)", node->rhs->val);
+						} else {
+							emit("	movl $%s, %d(%%ebp, %%eax, 4)", node->rhs->val, node->lhs->var->offset + 4);
+						}
+					} else {
+						emit("	movl $%s, %d(%%ebp)", node->rhs->val, node->lhs->var->offset);
+					}
 					break;
 				case ND_VAR:
-					if (node->rhs->var->init_data) {
+					if (node->lhs->array_len || node->rhs->array_len) {
+						emit_array_elem(node);
+					} else if (node->rhs->var->init_data) {
 						emit("	movl $%s, %d(%%ebp)", node->rhs->var->name, node->lhs->var->offset);
-						break;
+					} else {
+						emit("	movl %d(%%ebp), %%eax", node->rhs->var->offset);
+						emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
 					}
-					emit("	movl %d(%%ebp), %%eax", node->rhs->var->offset);
-					emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
+					break;
+				case ND_ARRAY:
+					emit_array(node->rhs);
 					break;
 				default:
 					emit_expr(node->rhs);

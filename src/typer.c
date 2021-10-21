@@ -106,9 +106,10 @@ static void match_variable_type(node_t* var) {
 			return;
 	}
 
-	if (!match_types(var->lhs->var->type, var->rhs->token->type)) {
+	token_type_t right_type = var->rhs->var ? var->rhs->var->type : var->rhs->token->type;
+	if (!match_types(var->lhs->var->type, right_type)) {
 		warning_at(var->token, "initialization of '%s' from '%s'",
-			token_to_str(var->lhs->var->type), token_to_str(var->rhs->token->type));
+			token_to_str(var->lhs->var->type), token_to_str(right_type));
 	}
 }
 

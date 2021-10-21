@@ -6,6 +6,8 @@ fn main() : void {
 	int : (= e -123456789)
 	int : (= f 123456789)
 	int : (= g 20)
+	int : (= h g)
+	int : (= i h)
 
 	(printi a)
 	(printi b)
@@ -14,4 +16,6 @@ fn main() : void {
 	(printi e)
 	(printi f)
 	(printi g)
+	(printi h)
+	(printi i)
 }

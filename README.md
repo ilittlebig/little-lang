@@ -27,9 +27,9 @@ make
 ```
 > Note: This will generate a binary file in the `bin` directory called `little`.
 ### Testing
-The test cases can be run with the `--tests` flag:
+The test cases can be run with the `--test` flag:
 ```
-bin/little --tests
+bin/little --test
 ```
 > Note: They do not they all possible cases, but most of them are covered.
 ### Compiling
@@ -37,7 +37,7 @@ To compile a file, use the generated binary from the build step:
 ```
 bin/little test_file.lil
 ```
-> Note: This will generate another binary in the `bin` directory called `a`.
+> Note: This will generate another binary in the `bin` directory called `a.out`.
 
 ## Features
 - [x] Addition (+)
@@ -53,7 +53,7 @@ bin/little test_file.lil
 - [ ] Floats
 - [ ] Structs
 - [ ] Enums
-- [ ] Arrays
+- [x] Arrays
 - [ ] Scopes
 - [x] If Statements
 - [x] For-Loops

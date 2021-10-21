@@ -19,6 +19,7 @@ typedef enum node_kind_t {
 	ND_FOR,			  // 'for'
 	ND_NUM,		      // Integer
 	ND_VAR,		      // Variable
+	ND_ARRAY,		  // Array
 	ND_EXPR,	      // Expression
 	ND_STMT,	      // Statement     UNUSED
 	ND_CALL,	      // Function call
@@ -43,6 +44,8 @@ struct obj_t {
 	int is_function;
 	int is_definition;
 	int is_builtin;
+	int is_param;
+	int is_array;
 
 	char* init_data;
 
@@ -77,6 +80,7 @@ struct node_t {
 	node_t* args;
 
 	char* val;
+	node_t* array_len;
 
 	obj_t* var;
 	node_t* next;
@@ -112,6 +116,8 @@ static node_t* new_unary(node_kind_t kind, node_t* expr, token_t* token);
 static node_t* declaration(parser_t* parser);
 static node_t* stmt(parser_t* parser);
 static node_t* compound_stmt(parser_t* parser);
+static node_t* read_array_dimensions(parser_t* parser);
+static node_t* read_array_initializer(parser_t* parser);
 static node_t* read_var(parser_t* parser);
 static node_t* read_number(parser_t* parser);
 static node_t* read_string(parser_t* parser);

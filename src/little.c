@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 		fatal_error("no input files");
 		printf("compilation terminated\n");
 		return 1;
-	} else if (strcmp(path, "--tests") == 0) {
+	} else if (strcmp(path, "--test") == 0) {
 		run_tests();
 	} else {
 		compile_little(path);
