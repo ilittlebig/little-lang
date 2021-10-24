@@ -1,4 +1,4 @@
-fn array_params(int int_array[10], string string_array[6]) : void {
+fn array_params(int int_array[], string string_array[6]) : void {
 	(printi int_array[0])
 	(printi int_array[1])
 	(printi int_array[2])
@@ -54,7 +54,7 @@ fn ret_array_elem() : string {
 }
 
 fn main() : void {
-	int : (= int_array[10] (10 20 30 40 50 60 70 80 90 100))
+	int : (= int_array[] (10 20 30 40 50 60 70 80 90 100))
 	(printi int_array[0])
 	(printi int_array[1])
 	(printi int_array[2])

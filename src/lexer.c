@@ -69,24 +69,24 @@ token_type_t str_to_token(char* word) {
 
 char* token_to_str(token_type_t token_type) {
 	switch (token_type) {
-		case FN:					  return "FN";
-		case IF:					  return "IF";
-		case WHILE:					  return "WHILE";
-		case FOR:					  return "FOR";
-		case ELSE:					  return "ELSE";
-		case RETURN:			      return "RETURN";
-		case DEFVAR:				  return "DEFVAR";
-		case LIST:					  return "LIST";
-		case NTH:					  return "NTH";
-		case INT:					  return "INT";
-		case FLOAT:					  return "FLOAT";
-		case STRING:				  return "STRING";
-		case VOID:					  return "VOID";
-		case NUMBER:				  return "NUMBER";
-		case IDENTIFIER:			  return "IDENTIFIER";
-		case GREATER_EQ:			  return "GREATER_EQ";
-		case EQ:					  return "EQ";
-		case LESS_EQ:				  return "LESS_EQ";
+		case FN:                      return "FN";
+		case IF:                      return "IF";
+		case WHILE:                   return "WHILE";
+		case FOR:                     return "FOR";
+		case ELSE:                    return "ELSE";
+		case RETURN:                  return "RETURN";
+		case DEFVAR:                  return "DEFVAR";
+		case LIST:                    return "LIST";
+		case NTH:                     return "NTH";
+		case INT:                     return "INT";
+		case FLOAT:                   return "FLOAT";
+		case STRING:                  return "STRING";
+		case VOID:                    return "VOID";
+		case NUMBER:                  return "NUMBER";
+		case IDENTIFIER:              return "IDENTIFIER";
+		case GREATER_EQ:              return "GREATER_EQ";
+		case EQ:                      return "EQ";
+		case LESS_EQ:                 return "LESS_EQ";
 		case NOT_EQ:				  return "NOT_EQ";
 		case LEFT_PAREN:			  return "LEFT_PAREN";
 		case RIGHT_PAREN:			  return "RIGHT_PAREN";

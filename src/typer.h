@@ -8,6 +8,7 @@ static void match_function_arguments(obj_t* fn, node_t* var);
 void match_function_return_buffer(node_t* return_buffer, obj_t* fn);
 static void match_arithmetic_operators(node_t* op);
 static void match_variable_type(node_t* var);
+static void check_expr(node_t* node);
 void check_body(node_t* node);
 void type_check_program(obj_t* globals);
 

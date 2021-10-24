@@ -105,6 +105,7 @@ static void skip_until_next_brace(parser_t* parser);
 
 static int is_typename(token_t* token);
 static char* make_label();
+static void initialize_array_size(parser_t* parser, node_t* node);
 
 static obj_t* find_var(char* name);
 static obj_t* new_var(char* name, token_type_t type);

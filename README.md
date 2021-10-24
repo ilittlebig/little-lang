@@ -37,7 +37,7 @@ To compile a file, use the generated binary from the build step:
 ```
 bin/little test_file.lil
 ```
-> Note: This will generate another binary in the `bin` directory called `a.out`.
+> Note: This will generate another binary in the `bin` directory called `a`.
 
 ## Features
 - [x] Addition (+)

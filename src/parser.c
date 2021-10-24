@@ -82,7 +82,16 @@ static char* make_label() {
 	return buff;
 }
 
-/* Returns a pointer to a variable. Functions will be also be
+/* Initialize an array's index or length. However, this
+   is not used for parameters. */
+
+static void initialize_array_size(parser_t* parser, node_t* node) {
+	node_t* size = read_array_dimensions(parser);
+	node->array_len = size;
+	node->var->is_array = true;
+}
+
+/* Return a pointer to a variable. Functions will be also be
    returned but as a global variable. */
 
 static obj_t* find_var(char* name) {
@@ -404,9 +413,7 @@ static node_t* read_var(parser_t* parser) {
 		node->var = var;
 
 		if (peek(parser)->type == LEFT_BRACKET) {
-			node_t* size = read_array_dimensions(parser);
-			node->array_len = size;
-			node->var->is_array = true;
+			initialize_array_size(parser, node);
 		}
 
 		return node;
@@ -642,9 +649,7 @@ static node_t* assign(parser_t* parser) {
 
 			node_t* var = read_var(parser);
 			if (peek(parser)->type == LEFT_BRACKET) {
-				node_t* size = read_array_dimensions(parser);
-				var->array_len = size;
-				var->var->is_array = true;
+				initialize_array_size(parser, var);
 			}
 
 			node_t* rhs = assign(parser);
