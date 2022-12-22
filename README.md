@@ -5,7 +5,7 @@ Compiler and tools for the Little programming language.
 ### Hello World
 ```rs
 fn main() : void {
-  (print "Hello, World!\n")
+  (printf "%s\n" "Hello, World!")
 }
 ```
 ### Add Two Numbers
@@ -16,7 +16,7 @@ fn add(int a, int b) : int {
 
 fn main() : void {
   (defvar sum (add 5 10))
-  (printi sum)
+  (printf "%i\n" sum)
 }
 ```
 ## Building, Testing & Compiling
