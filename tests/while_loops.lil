@@ -1,21 +1,21 @@
 fn main() : void {
 	int : (= a 0)
 	while (< a 10) {
-		(printi a)
+		(printf "%i\n" a)
 		(= a (+ a 1))
 	}
 
 	int : (= b 10)
 	while (> b 0) {
-		(printi b)
+		(printf "%i\n" b)
 		(= b (- b 1))
 	}
 
 	int : (= c 10)
 	while (> c 0) {
-		(printi c)
+		(printf "%i\n" c)
 		if (== (% c 2) 0) {
-			(print "num is even\n")
+			(printf "%s" "num is even\n")
 		}
 		(= c (- c 1))
 	}

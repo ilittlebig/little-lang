@@ -4,133 +4,133 @@ fn main() : void {
 
 	/*    ==    */
 	if (== 0 1) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (!= 0 1) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 10)
 	if (== a 20) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (!= a 20) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 10)
 	(= b 20)
 	if (== a b) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (!= a b) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	/*    !=    */
 	if (!= 0 0) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (== 0 0) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 10)
 	if (!= a 10) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (== a 10) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	(= b 20)
 	if (!= a b) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (== a b) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	/*    <    */
 	if (< 1 1) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (<= 1 1) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	if (< a 20) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (<= a 20) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	(= b 20)
 	if (< a b) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (<= a b) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	/*    <=    */
 	if (<= 2 1) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (>= 2 1) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 30)
 	if (<= a 20) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (>= a 20) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 30)
 	(= b 20)
 	if (<= a b) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (>= a b) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	/*    >    */
 	if (> 0 0) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (== 0 0) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	if (> a 30) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (<= a 30) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	(= b 30)
 	if (> a b) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (< a b) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	/*    >=    */
 	if (>= 1 3) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (< 1 3) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	if (>= a 30) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (< a 30) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 
 	(= a 20)
 	(= b 30)
 	if (>= a b) {
-		(print "true\n")
+		(printf "%s" "true\n")
 	} else if (< a b) {
-		(print "false\n")
+		(printf "%s" "false\n")
 	}
 }

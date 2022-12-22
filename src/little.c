@@ -15,10 +15,16 @@ static void compile_little(char* path) {
 			printf("compilation failed\n");
 			return;
 		}
-
 		codegen(globals);
+
 		write_command("as --32 ./bin/assembly.asm ./lib/stdlib.asm -o ./bin/a.o");
-		write_command("ld -m elf_i386 ./bin/a.o -o ./bin/a");
+		#ifdef _WIN32
+			write_command("ld -m i386pe ./bin/a.o -o ./bin/a -lmsvcrt");
+		#endif
+
+		#ifdef linux
+			write_command("ld -m elf_i386 ./bin/a.o -o ./bin/a -lc");
+		#endif
 	}
 }
 

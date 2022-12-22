@@ -18,10 +18,17 @@ static void run_test_for_file(char* path) {
 		type_check_program(globals);
 
 		codegen(globals);
-		write_command("as --32 ./bin/assembly.asm ./lib/stdlib.asm -o ./bin/a.o");
-		write_command("ld -m elf_i386 ./bin/a.o -o ./bin/a");
 
-		char* output = write_command("bin/a");
+		write_command("as --32 ./bin/assembly.asm ./lib/stdlib.asm -o ./bin/a.o");
+		#ifdef _WIN32
+			write_command("ld -m i386pe ./bin/a.o -o ./bin/a -lmsvcrt");
+		#endif
+
+		#ifdef linux
+			write_command("ld -m elf_i386 ./bin/a.o -o ./bin/a -lc");
+		#endif
+
+		char* output = write_command("./bin/a");
 		char* expected_output = read_file(expected_output_file_path);
 		if (strcmp(output, expected_output) == 0) {
 			printf("[\033[1;37m%s\033[0m]: \033[1;32mSucceeded\033[0m\n", path);

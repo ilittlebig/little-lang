@@ -12,9 +12,10 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -g
+CC = gcc
 
 $(BIN_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+	$(CC) $(CPPFLAGS) $(SRCS) -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/%.c.o: %.c
 	$(MKDIR_P) $(dir $@)

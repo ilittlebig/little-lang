@@ -4,5 +4,5 @@ fn add(int a, int b) : int {
 
 fn main() : void {
 	(defvar sum (add 500 750))
-	(printi sum)
+	(printf "%i\n" sum)
 }

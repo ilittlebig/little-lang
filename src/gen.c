@@ -90,9 +90,27 @@ static void push_args2(node_t* node) {
 
 static int push_args(node_t* node) {
 	int args = 0;
-	for (node_t* arg = node->args; arg; arg = arg->next) {
-		args++;
+
+	/* Reverse the order the arguments are pushed, but only
+	   for builtin functions such as the printf function */
+	if (node->lhs->var->is_builtin) {
+		node_t* arg = node->args;
+        node_t* prev = NULL;
+
+        while (arg) {
+            node_t* temp = arg->next;
+            arg->next = prev;
+            prev = arg;
+            arg = temp;
+            args++;
+        }
+        node->args = prev;
+	} else {
+		for (node_t* arg = node->args; arg; arg = arg->next) {
+			args++;
+		}
 	}
+
 	push_args2(node->args);
 	return args;
 }
@@ -125,6 +143,7 @@ static void emit_cond_jmp(node_t* node, char* section, int c) {
 }
 
 static void emit_stmt(node_t* node) {
+	int args = 0;
 	switch(node->kind) {
 		case ND_BLOCK:
 			for (node_t* n = node->body; n; n = n->next) {
@@ -135,14 +154,18 @@ static void emit_stmt(node_t* node) {
 			emit_expr(node->lhs);
 			break;
 		case ND_DEFVAR:
-			int args = push_args(node->rhs);
+			args = push_args(node->rhs);
 			emit("	call %s", node->rhs->lhs->var->name);
 			args > 0 ? emit("	add $%d, %%esp", args * 4) : NULL;
 			emit("	movl %%eax, %d(%%ebp)", node->lhs->var->offset);
 			break;
 		case ND_CALL:
 			args = push_args(node);
-			emit("	call %s", node->lhs->var->name);
+			if (node->lhs->var->is_builtin) {
+				emit("	call _%s", node->lhs->var->name);
+			} else {
+				emit("	call %s", node->lhs->var->name);
+			}
 			args > 0 ? emit("	add $%d, %%esp", args * 4) : NULL;
 			break;
 		case ND_RETURN:
@@ -548,7 +571,15 @@ void codegen(obj_t* globals) {
 	emit("	call main");
 	emit("	movl %%eax, %%ebx");
 	emit("	movl $1, %%eax");
-	emit("	int $0x80");
+
+
+	#ifdef _WIN32
+		emit("	call _exit");
+	#endif
+
+	#ifdef linux
+		emit("	int $0x80");
+	#endif
 
 	for (obj_t* var = globals; var; var = var->next) {
 		if (var->is_function || !var->is_definition) {
@@ -562,6 +593,7 @@ void codegen(obj_t* globals) {
 			emit(".section .text");
 		}
 	}
+
 
 	for (obj_t* fn = globals; fn; fn = fn->next) {
 		if (!fn->is_function || !fn->is_definition) {

@@ -1,7 +1,7 @@
 fn foo(int a, string b, int c) : void {
-	(printi a)
-	(print b)
-	(printi c)
+	(printf "%i\n" a)
+	(printf "%s" b)
+	(printf "%i\n" c)
 }
 
 fn main() : void {

@@ -738,20 +738,15 @@ static obj_t* function(parser_t* parser) {
 }
 
 static void declare_builtin_functions() {
-	obj_t* printfn = new_gvar("print", VOID);
+	obj_t* printfn = new_gvar("printf", VOID);
 	printfn->is_definition = false;
 	printfn->is_function = true;
 	printfn->is_builtin = true;
 
-	obj_t* printifn = new_gvar("printi", VOID);
-	printifn->is_definition = false;
-	printifn->is_function = true;
-	printifn->is_builtin = true;
-
-	obj_t* strlenfn = new_gvar("strlen", INT);
-	strlenfn->is_definition = false;
-	strlenfn->is_function = true;
-	strlenfn->is_builtin = true;
+	obj_t* strlen = new_gvar("strlen", NUMBER);
+	strlen->is_definition = false;
+	strlen->is_function = true;
+	strlen->is_builtin = true;
 }
 
 /* Parse the source file. Returns a pointer to the

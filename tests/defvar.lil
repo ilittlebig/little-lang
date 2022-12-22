@@ -9,9 +9,9 @@ fn foo() : string {
 
 fn main() : void {
 	(defvar str (foo))
-	(print str)
+	(printf "%s" str)
 	(defvar len (strlen str))
-	(printi len)
+	(printf "%i\n" len)
 	(defvar sum (add 5 10))
-	(printi sum)
+	(printf "%i\n" sum)
 }

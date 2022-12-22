@@ -145,6 +145,7 @@ token_t* read_digit(tokenizer_t* tokenizer) {
 			break;
 		}
 	}
+	digit[size] = '\0';
 
 	token->type = NUMBER;
 	token->value = digit;
